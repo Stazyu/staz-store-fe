@@ -1,0 +1,38 @@
+# Dependencies
+node_modules
+
+# Build output
+.next
+out
+build
+dist
+
+# Version control
+.git
+.gitignore
+
+# IDE / Editor
+.vscode
+.idea
+*.swp
+*.swo
+
+# Environment (injected at build/run time)
+.env*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+README.md
+MIGRATION.md
+STRUCTURE.md
+*.md
+*.tsbuildinfo
+next-env.d.ts
+
+# Agent / Skills
+.agent
+.agents
+skills-lock.json
