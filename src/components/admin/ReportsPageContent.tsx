@@ -101,8 +101,9 @@ const CustomTooltip = ({
     name: string;
     payload: DailySale;
     color: string;
-    dataKey: string;
+    dataKey: string | number | (string | number)[];
   }>;
+  label?: string;
 }) => {
   if (!active || !payload || !payload.length) return null;
 
@@ -196,8 +197,8 @@ export default function ReportsPageContent() {
   return (
     <div className="space-y-6">
       {/* Modern Gradient Header */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-6 md:p-8 shadow-2xl">
-        <div className="absolute inset-0 bg-grid-white/[0.06] bg-[size:20px_20px]" />
+      <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-blue-600 via-blue-700 to-indigo-800 p-6 md:p-8 shadow-2xl">
+        <div className="absolute inset-0 bg-grid-white/[0.06] bg-size-[20px_20px]" />
         <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-5">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white">Laporan & Analitik</h1>
@@ -246,7 +247,7 @@ export default function ReportsPageContent() {
       </div>
 
       {/* Date Range Picker (Sticky) */}
-      <Card className="sticky top-4 z-20 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-gray-900/40">
+      <Card className="sticky top-4 z-20 backdrop-blur supports-backdrop-filter:bg-white/60 dark:supports-backdrop-filter:bg-gray-900/40">
         <CardHeader className="pb-2">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="space-y-1">
@@ -414,7 +415,7 @@ export default function ReportsPageContent() {
                         innerRadius={60}
                         paddingAngle={5}
                         dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        label={({ name, percent }) => `${name} ${percent !== undefined ? (percent * 100).toFixed(0) : 0}%`}
                       >
                         {salesData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
@@ -520,7 +521,7 @@ export default function ReportsPageContent() {
                       outerRadius={100}
                       paddingAngle={5}
                       dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) => `${name} ${percent !== undefined ? (percent * 100).toFixed(0) : 0}%`}
                     >
                       {paymentMethods.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />

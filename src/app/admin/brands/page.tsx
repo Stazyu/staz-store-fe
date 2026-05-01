@@ -1,5 +1,3 @@
-"use client";
-
 import BrandTable from "@/components/admin/BrandTable";
 
 export default function BrandsPage() {

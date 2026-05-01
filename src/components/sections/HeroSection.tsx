@@ -1,5 +1,5 @@
-import ProductCard from '../ui/ProductCard';
-import { gamesList, voucherList } from '@/data/games';
+import GameCard from '../home/GameCard';
+import { gamesList, voucherList } from '@/constants/games';
 
 export default function HeroSection() {
   return (
@@ -33,7 +33,7 @@ export default function HeroSection() {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-5">
           {gamesList.filter(game => game.isPopular).map((game) => (
-            <ProductCard key={game.id} {...game} />
+            <GameCard key={game.id} {...game} />
           ))}
         </div>
       </section>
@@ -63,7 +63,7 @@ export default function HeroSection() {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-5">
           {gamesList.map((game) => (
-            <ProductCard key={game.id} {...game} />
+            <GameCard key={game.id} {...game} />
           ))}
         </div>
       </section>
@@ -93,7 +93,7 @@ export default function HeroSection() {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-5">
           {voucherList.map((voucher) => (
-            <ProductCard key={voucher.id} {...voucher} />
+            <GameCard key={voucher.id} {...voucher} />
           ))}
         </div>
       </section>

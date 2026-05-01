@@ -3,7 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 
 import "./globals.css";
 import ThemeProvider from "@/components/providers/ThemeProvider";
-import AuthSession from "@/components/providers/AuthSession";
+import QueryProvider from "@/components/providers/QueryProvider";
+// import AuthSession from "@/components/providers/AuthSession";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,18 +23,21 @@ export const metadata: Metadata = {
   description: "Tempat top up game dan pulsa terpercaya",
 };
 
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body className="antialiased bg-gray-50 dark:bg-gray-900" suppressHydrationWarning>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+      <body className="antialiased bg-gray-50 dark:bg-gray-900">
         <ThemeProvider>
-          <AuthSession>
+          <QueryProvider>
+            {/* <AuthSession> */}
             {children}
-          </AuthSession>
+            {/* </AuthSession> */}
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>

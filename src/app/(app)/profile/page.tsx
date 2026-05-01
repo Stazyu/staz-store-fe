@@ -1,10 +1,32 @@
-import { auth } from '@/lib/auth';
+"use client";
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
+import authClient from '@/lib/auth-client';
+import {
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  Edit,
+  Lock,
+  Shield,
+  MessageSquare,
+  Wallet
+} from 'lucide-react';
+import { useProfile } from '@/hooks/useProfile';
 
-const formatDate = (dateString: string) => {
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
+
+
+const formatDate = (dateString: Date | string) => {
+  if (!dateString) return '';
   return format(new Date(dateString), 'dd MMMM yyyy, HH:mm', { locale: id });
 };
 
@@ -17,124 +39,216 @@ const formatCurrency = (amount: number) => {
   }).format(amount);
 };
 
-export default async function ProfilePage() {
-  const session = await auth();
-  console.log("Profile Page : ", session);
+export default function ProfilePage() {
+  const { data: user, isLoading: loading } = useProfile();
 
-  if (!session) {
+  const session = authClient.useSession();
+
+  if (session.data === null && !session.isPending) {
     redirect('/');
   }
 
-  const { user } = session;
+  // Manual fetch removed
+
+
+  const getInitials = (name: string) => {
+    return name
+      ?.split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2) || 'USER';
+  };
+
+  if (loading || !user) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row gap-6">
+          <Card className="w-full md:w-1/3">
+            <CardHeader className="flex flex-col items-center">
+              <Skeleton className="h-24 w-24 rounded-full" />
+              <Skeleton className="h-6 w-32 mt-4" />
+              <Skeleton className="h-4 w-48 mt-2" />
+            </CardHeader>
+          </Card>
+          <Card className="w-full md:w-2/3">
+            <CardHeader>
+              <Skeleton className="h-6 w-48" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
-          <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Profil Saya</h1>
-          </div>
+    <div className="space-y-6 pb-10">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Profil Saya</h1>
+        <p className="text-muted-foreground">
+          Kelola informasi akun, preferensi, dan keamanan Anda.
+        </p>
+      </div>
 
-          <div className="px-4 py-5 sm:p-6">
-            <div className="space-y-6">
-              <div className="border-b border-gray-200 pb-6">
-                <h2 className="text-lg font-medium text-gray-900 dark:text-white">Informasi Akun</h2>
-                <div className="mt-4 grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">ID Pengguna</p>
-                    <p className="mt-1 text-sm text-gray-900 dark:text-white font-mono">{user.id}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Username</p>
-                    <p className="mt-1 text-sm text-gray-900 dark:text-white">{user.username}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Role</p>
-                    <p className="mt-1 text-sm text-gray-900 dark:text-white capitalize">{user.role.toLowerCase()}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Saldo</p>
-                    <p className="mt-1 text-sm font-medium text-green-600 dark:text-green-400">
-                      {formatCurrency(user.balance)}
-                    </p>
-                  </div>
-                </div>
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Sidebar / Identity Card */}
+        <aside className="w-full lg:w-80 space-y-6">
+          <Card>
+            <CardHeader className="flex flex-col items-center text-center pb-2">
+              <Avatar className="h-24 w-24 mb-4 ring-2 ring-primary/10">
+                <AvatarImage src={user?.image} alt={user?.name} />
+                <AvatarFallback className="text-lg bg-primary/10 text-primary font-bold">
+                  {getInitials(user?.name)}
+                </AvatarFallback>
+              </Avatar>
+              <CardTitle className="text-xl">{user?.name}</CardTitle>
+              <CardDescription>{user?.email}</CardDescription>
+              <div className="flex items-center gap-2 mt-1">
+                {user?.sellOffline && (
+                  <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400">
+                    Offline Seller
+                  </Badge>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="bg-muted/50 rounded-lg p-3 text-center">
+                <p className="text-sm font-medium text-muted-foreground">Saldo Dompet</p>
+                <p className="text-2xl font-bold text-primary">{formatCurrency(user?.balance || 0)}</p>
               </div>
 
-              <div className="border-b border-gray-200 pb-6">
-                <h2 className="text-lg font-medium text-gray-900 dark:text-white">Informasi Pribadi</h2>
-                <div className="mt-4 grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Nama Lengkap</p>
-                    <p className="mt-1 text-sm text-gray-900 dark:text-white">{user.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Email</p>
-                    <p className="mt-1 text-sm text-gray-900 dark:text-white">{user.email}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Nomor Telepon</p>
-                    <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                      {user.phone_number || '-'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">WhatsApp</p>
-                    <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                      {user.whatsapp_id || '-'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Telegram</p>
-                    <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                      {user.telegram_id || '-'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Jual Offline</p>
-                    <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                      {user.sell_offline ? 'Ya' : 'Tidak'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-b border-gray-200 pb-6">
-                <h2 className="text-lg font-medium text-gray-900 dark:text-white">Informasi Sistem</h2>
-                <div className="mt-4 grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Dibuat Pada</p>
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                      {formatDate(user.createdAt)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Diperbarui Pada</p>
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                      {formatDate(user.updatedAt)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-4">
-                <h2 className="text-lg font-medium text-gray-900 dark:text-white">Aksi</h2>
-                <div className="mt-4 flex space-x-4">
-                  <Link
-                    href="/profile/edit"
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-600"
-                  >
-                    Edit Profil
+              <div className="space-y-2 pt-2">
+                <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 text-white border-0">
+                  <Link href="/profile/topup">
+                    <Wallet className="mr-2 h-4 w-4" /> Top Up Saldo
                   </Link>
-                  <Link
-                    href="/profile/change-password"
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-600"
-                  >
-                    Ganti Password
+                </Button>
+                <Button asChild className="w-full" variant="outline">
+                  <Link href="/profile/edit">
+                    <Edit className="mr-2 h-4 w-4" /> Edit Profil
                   </Link>
-                </div>
+                </Button>
+                <Button asChild className="w-full" variant="outline">
+                  <Link href="/profile/change-password">
+                    <Lock className="mr-2 h-4 w-4" /> Ganti Password
+                  </Link>
+                </Button>
               </div>
-            </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Ringkasan Sistem</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">ID Akun</span>
+                <span className="font-mono text-xs">{user?.id?.substring(0, 8)}...</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Bergabung</span>
+                <span>{user?.createdAt ? format(new Date(user.createdAt), 'dd MMM yyyy', { locale: id }) : '-'}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Update Terakhir</span>
+                <span>{user?.updatedAt ? format(new Date(user.updatedAt), 'dd MMM yyyy', { locale: id }) : '-'}</span>
+              </div>
+            </CardContent>
+          </Card>
+        </aside>
+
+        {/* Main Content */}
+        <div className="flex-1">
+          {/* Main Content */}
+          <div className="flex-1">
+            <Card>
+              <CardHeader>
+                <CardTitle>Detail Profil</CardTitle>
+                <CardDescription>
+                  Informasi lengkap mengenai identitas dan kontak Anda.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-8">
+                {/* Personal Information Section */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Informasi Pribadi</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                        <User className="h-4 w-4" />
+                        <span className="text-sm font-medium">Nama Lengkap</span>
+                      </div>
+                      <p className="font-medium">{user?.name}</p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                        <Mail className="h-4 w-4" />
+                        <span className="text-sm font-medium">Email</span>
+                      </div>
+                      <p className="font-medium">{user?.email}</p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                        <Shield className="h-4 w-4" />
+                        <span className="text-sm font-medium">Role Akun</span>
+                      </div>
+                      <p className="font-medium capitalize">{user?.role}</p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                        <Calendar className="h-4 w-4" />
+                        <span className="text-sm font-medium">Tanggal Bergabung</span>
+                      </div>
+                      <p className="font-medium">{formatDate(user?.createdAt)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Contact Information Section */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Kontak & Media Sosial</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                        <Phone className="h-4 w-4" />
+                        <span className="text-sm font-medium">Nomor Telepon</span>
+                      </div>
+                      <p className="font-medium">{user?.phoneNumber || '-'}</p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                        <MessageSquare className="h-4 w-4" />
+                        <span className="text-sm font-medium">WhatsApp</span>
+                      </div>
+                      <p className="font-medium">{user?.whatsappId || '-'}</p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                        <MessageSquare className="h-4 w-4" />
+                        <span className="text-sm font-medium">Telegram</span>
+                      </div>
+                      <p className="font-medium">{user?.telegramId || '-'}</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>

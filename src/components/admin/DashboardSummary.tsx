@@ -43,51 +43,85 @@ export function DashboardSummary({
             description: "Hari ini",
             change: revenueChange,
             previousValue: `Rp ${yesterday.totalRevenue.toLocaleString('id-ID')}`,
+            accent: "blue",
         },
         {
             title: "Total Transaksi",
             value: today.totalTransactions,
-            icon: <FiShoppingBag className="h-5 w-5 text-green-500" />,
+            icon: <FiShoppingBag className="h-5 w-5 text-sky-500" />,
             description: "Hari ini",
             change: transactionsChange,
             previousValue: yesterday.totalTransactions,
+            accent: "sky",
         },
         {
             title: "Rata-rata Transaksi",
             value: `Rp ${today.avgTransaction.toLocaleString('id-ID')}`,
-            icon: <FiTrendingUp className="h-5 w-5 text-purple-500" />,
+            icon: <FiTrendingUp className="h-5 w-5 text-indigo-500" />,
             description: "Per transaksi",
             change: avgTransactionChange,
             previousValue: `Rp ${yesterday.avgTransaction.toLocaleString('id-ID')}`,
+            accent: "indigo",
         },
         {
             title: "Tingkat Keberhasilan",
             value: `${today.successRate}%`,
-            icon: <FiClock className="h-5 w-5 text-orange-500" />,
+            icon: <FiClock className="h-5 w-5 text-cyan-500" />,
             description: "Transaksi berhasil",
             change: successRateChange,
             previousValue: `${yesterday.successRate}%`,
+            accent: "cyan",
         },
     ];
+
+    const getAccentClasses = (accent: string) => {
+        const accents: Record<string, { border: string; bg: string; iconBg: string }> = {
+            blue: {
+                border: "border-l-blue-500",
+                bg: "hover:border-blue-200 dark:hover:border-blue-800/50",
+                iconBg: "bg-blue-100 dark:bg-blue-900/30",
+            },
+            sky: {
+                border: "border-l-sky-500",
+                bg: "hover:border-sky-200 dark:hover:border-sky-800/50",
+                iconBg: "bg-sky-100 dark:bg-sky-900/30",
+            },
+            indigo: {
+                border: "border-l-indigo-500",
+                bg: "hover:border-indigo-200 dark:hover:border-indigo-800/50",
+                iconBg: "bg-indigo-100 dark:bg-indigo-900/30",
+            },
+            cyan: {
+                border: "border-l-cyan-500",
+                bg: "hover:border-cyan-200 dark:hover:border-cyan-800/50",
+                iconBg: "bg-cyan-100 dark:bg-cyan-900/30",
+            },
+        };
+        return accents[accent] || accents.blue;
+    };
 
     return (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {summaryCards.map((card, index) => {
                 const ChangeIcon = card.change.isIncrease ? FiArrowUp : FiArrowDown;
                 const changeColor = card.change.isIncrease ? 'text-green-500' : 'text-red-500';
+                const accentClasses = getAccentClasses(card.accent);
 
                 return (
-                    <Card key={index}>
+                    <Card
+                        key={index}
+                        className={`border-l-4 ${accentClasses.border} ${accentClasses.bg} transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5`}
+                    >
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
-                            <div className="h-5 w-5">
+                            <div className={`h-9 w-9 rounded-lg ${accentClasses.iconBg} flex items-center justify-center`}>
                                 {card.icon}
                             </div>
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{card.value}</div>
-                            <div className="flex items-center gap-1">
-                                <div className={`flex items-center text-xs ${changeColor}`}>
+                            <div className="flex items-center gap-1 mt-1">
+                                <div className={`flex items-center text-xs font-medium ${changeColor}`}>
                                     <ChangeIcon className="h-3 w-3 mr-1" />
                                     {Math.abs(card.change.value)}%
                                 </div>
@@ -95,7 +129,7 @@ export function DashboardSummary({
                                     vs {card.previousValue} kemarin
                                 </span>
                             </div>
-                            <p className="text-xs text-muted-foreground">{card.description}</p>
+                            <p className="text-xs text-muted-foreground mt-1">{card.description}</p>
                         </CardContent>
                     </Card>
                 );

@@ -1,66 +1,44 @@
-import React, { InputHTMLAttributes, forwardRef } from 'react';
-import { FiEye, FiEyeOff } from 'react-icons/fi';
+'use client';
 
-interface InputFieldProps extends InputHTMLAttributes<HTMLInputElement> {
-  label: string;
-  error?: string;
-  icon?: React.ReactNode;
-  showPasswordToggle?: boolean;
-  onTogglePassword?: () => void;
+import React, { useState } from 'react';
+import { LucideIcon } from 'lucide-react';
+import { Input, type InputProps } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
+import { Eye, EyeOff } from 'lucide-react';
+
+interface InputFieldProps extends InputProps {
+  icon: LucideIcon;
+  containerClassName?: string;
+  isPassword?: boolean;
 }
 
-const InputField = forwardRef<HTMLInputElement, InputFieldProps>(({
-  label,
-  error,
-  icon,
-  className = '',
-  type = 'text',
-  showPasswordToggle = false,
-  onTogglePassword,
-  ...props
-}, ref) => {
-  const inputId = `input-${label.toLowerCase().replace(/\s+/g, '-')}`;
+const InputField = React.forwardRef<HTMLInputElement, InputFieldProps>(
+  ({ icon: Icon, className, containerClassName, isPassword = false, ...props }, ref) => {
+    const [showPassword, setShowPassword] = useState(false);
 
-  return (
-    <div className={`mb-4 ${className}`}>
-      <label
-        htmlFor={inputId}
-        className="block text-sm font-medium text-gray-700 mb-1"
-      >
-        {label}
-      </label>
-      <div className="relative">
-        {icon && (
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            {icon}
-          </div>
-        )}
-        <input
-          id={inputId}
-          ref={ref}
-          type={type}
-          className={`block w-full px-4 py-2 border ${error ? 'border-red-500' : 'border-gray-300'} 
-            rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-            ${icon ? 'pl-10' : 'pl-3'} pr-10`}
-          {...props}
+    return (
+      <div className={cn('relative flex items-center', containerClassName)}>
+        <Icon className="absolute left-3 h-4 w-4 text-muted-foreground" />
+        <Input 
+          ref={ref} 
+          className={cn('pl-9', isPassword ? 'pr-10' : '', className)} 
+          type={isPassword ? (showPassword ? 'text' : 'password') : props.type}
+          {...props} 
         />
-        {showPasswordToggle && (
-          <button
-            type="button"
-            onClick={onTogglePassword}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
-            tabIndex={-1}
+        {isPassword && (
+          <button 
+            type="button" 
+            className="absolute right-3 h-4 w-4 text-muted-foreground hover:text-foreground" 
+            onClick={() => setShowPassword(!showPassword)}
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
           >
-            {type === 'password' ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         )}
       </div>
-      {error && (
-        <p className="mt-1 text-sm text-red-600">{error}</p>
-      )}
-    </div>
-  );
-});
+    );
+  }
+);
 
 InputField.displayName = 'InputField';
 

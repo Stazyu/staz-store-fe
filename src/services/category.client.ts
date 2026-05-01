@@ -1,46 +1,23 @@
-export interface Category {
-    id: string;
-    name: string;
-    brandCount: number;
-    color?: string;
-    icon?: string;
-    is_active?: boolean;
-    created_at?: string;
-    updated_at?: string;
-}
+import { Category, CreateCategoryDto, ApiResponse, CategoryListResponse, CategoryByIdResponse } from '@/types/category';
+import { fetchWithJwt } from '@/lib/api-client';
 
-export interface CreateCategoryDto {
-    name: string;
-    brandCount: number;
-    is_active?: boolean;
-    color?: string;
-    icon?: string;
-}
-
-export interface ApiResponse<T> {
-    success: boolean;
-    message: string;
-    data?: T;
-    categories?: T[];
-}
-
-const API_BASE_URL = '/api/categories';
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/categories`;
 
 export const fetchCategories = async (): Promise<Category[]> => {
     try {
-        const response = await fetch(API_BASE_URL, {
+        const response = await fetchWithJwt(API_BASE_URL, {
             method: 'GET',
-            credentials: 'include',
             cache: 'no-store',
+            credentials: 'include',
         });
 
-        const data: ApiResponse<Category> = await response.json();
+        const data: ApiResponse<Category[]> = await response.json();
 
         if (!response.ok) {
             throw new Error(data.message || 'Gagal mengambil data kategori');
         }
 
-        return data.categories || [];
+        return data.data || [];
     } catch (error) {
         console.error('Error fetching categories:', error);
         throw error;
@@ -49,13 +26,13 @@ export const fetchCategories = async (): Promise<Category[]> => {
 
 export const createCategory = async (categoryData: CreateCategoryDto): Promise<Category> => {
     try {
-        const response = await fetch(API_BASE_URL, {
+        const response = await fetchWithJwt(API_BASE_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            credentials: 'include',
             body: JSON.stringify(categoryData),
+            credentials: 'include',
         });
 
         const data: ApiResponse<Category> = await response.json();
@@ -75,18 +52,18 @@ export const createCategory = async (categoryData: CreateCategoryDto): Promise<C
     }
 };
 
-export const updateCategory = async (id: string, categoryData: Partial<CreateCategoryDto>): Promise<Category> => {
+export const updateCategory = async (id: string, categoryData: Partial<CreateCategoryDto>): Promise<CategoryByIdResponse> => {
     try {
-        const response = await fetch(`${API_BASE_URL}/${id}`, {
-            method: 'PUT',
+        const response = await fetchWithJwt(`${API_BASE_URL}/${id}`, {
+            method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
             },
-            credentials: 'include',
             body: JSON.stringify(categoryData),
+            credentials: 'include',
         });
 
-        const data: ApiResponse<Category> = await response.json();
+        const data: ApiResponse<CategoryByIdResponse> = await response.json();
 
         if (!response.ok) {
             throw new Error(data.message || 'Gagal memperbarui kategori');
@@ -105,7 +82,7 @@ export const updateCategory = async (id: string, categoryData: Partial<CreateCat
 
 export const deleteCategory = async (id: string): Promise<void> => {
     try {
-        const response = await fetch(`${API_BASE_URL}/${id}`, {
+        const response = await fetchWithJwt(`${API_BASE_URL}/${id}`, {
             method: 'DELETE',
             credentials: 'include',
         });

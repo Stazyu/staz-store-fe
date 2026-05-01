@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { dummyTransactions } from '@/data/transactions';
+import { dummyTransactions } from '@/constants/transactions';
 import { TransactionItem } from '@/types/transaction';
 import { FiChevronDown, FiChevronUp, FiInfo, FiCheckCircle, FiClock, FiXCircle } from 'react-icons/fi';
 

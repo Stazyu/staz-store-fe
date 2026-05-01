@@ -1,69 +1,60 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { FiEye, FiFilter, FiDownload, FiDollarSign } from "react-icons/fi";
+import { fetchAdminTransactions, Transaction } from "@/services/transaction.client";
 
-interface Transaction {
-  id: string;
-  idTrx: string;
-  trxDari: string;
-  customer: string;
-  product: string;
-  date: string;
-  status: "success" | "pending" | "failed";
-  total: number;
-}
-
-const statusMap = {
-  success: { label: "Berhasil", color: "bg-green-100 text-green-700" },
-  pending: { label: "Pending", color: "bg-yellow-100 text-yellow-700" },
-  failed: { label: "Gagal", color: "bg-red-100 text-red-700" },
+const statusMap: Record<string, { label: string; color: string }> = {
+  SUCCESS: { label: "Berhasil", color: "bg-green-100 text-green-700" },
+  PENDING: { label: "Pending", color: "bg-yellow-100 text-yellow-700" },
+  FAILED: { label: "Gagal", color: "bg-red-100 text-red-700" },
 };
 
-const initialTransactions: Transaction[] = [
-  { id: "TRX001", idTrx: "INV-001", trxDari: "Mobile App", customer: "Wahyu Hidayat", product: "Diamond ML 86", date: "2025-06-13 10:12", status: "success", total: 150000 },
-  { id: "TRX002", idTrx: "INV-002", trxDari: "Website", customer: "Budi Santoso", product: "Pulsa Telkomsel 50K", date: "2025-06-13 09:47", status: "success", total: 51000 },
-  { id: "TRX003", idTrx: "INV-003", trxDari: "Mobile App", customer: "Siti Aminah", product: "OVO Topup 100K", date: "2025-06-13 09:32", status: "pending", total: 101000 },
-  { id: "TRX004", idTrx: "INV-004", trxDari: "WhatsApp", customer: "Wahyu Hidayat", product: "Diamond FF 70", date: "2025-06-13 08:59", status: "failed", total: 90000 },
-  { id: "TRX005", idTrx: "INV-005", trxDari: "Website", customer: "Budi Santoso", product: "Gopay 50K", date: "2025-06-12 21:12", status: "success", total: 51000 },
-];
+export interface TransactionsTableProps {
+  defaultType?: string;
+  defaultCategory?: string;
+}
 
-export default function TransactionsTable() {
-  const [transactions] = useState<Transaction[]>(initialTransactions);
+export default function TransactionsTable({ defaultType, defaultCategory }: TransactionsTableProps = {}) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>("");
-  const [detailId, setDetailId] = useState<string | null>(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [page, setPage] = useState(1);
-  const pageSize = 5;
+  const pageSize = 10;
 
-  // Filter transaksi
-  const filtered = transactions.filter(trx => {
-    const trxDate = trx.date.split(" ")[0];
-    const inDateRange = (!startDate || trxDate >= startDate) && (!endDate || trxDate <= endDate);
-    return (
-      (status ? trx.status === status : true) &&
-      (search ? (
-        trx.customer.toLowerCase().includes(search.toLowerCase()) ||
-        trx.product.toLowerCase().includes(search.toLowerCase())
-      ) : true) &&
-      inDateRange
-    );
+  // Derived query parameters
+  const offset = (page - 1) * pageSize;
+
+  const { data: response, isLoading, isError, error } = useQuery({
+    queryKey: ['adminTransactions', { search, status, startDate, endDate, limit: pageSize, offset, type: defaultType, category: defaultCategory }],
+    queryFn: () => fetchAdminTransactions({ search, status, startDate, endDate, limit: pageSize, offset, type: defaultType, category: defaultCategory }),
   });
-  // Pagination
-  const totalPage = Math.ceil(filtered.length / pageSize);
-  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
-  const detailTrx = transactions.find(t => t.id === detailId);
 
-  // Dummy export handler
+  const transactions = response?.data || [];
+  const totalItem = response?.pagination?.total || 0;
+  const totalPage = Math.ceil(totalItem / pageSize);
+
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const detailTrx = transactions.find((t) => t.id === detailId);
+
+  // Reset pagination on filter change
+  useEffect(() => {
+    setPage(1);
+  }, [search, status, startDate, endDate]);
+
   const handleExport = (type: 'pdf' | 'excel') => {
-    alert(`Ekspor ke ${type.toUpperCase()} belum diimplementasikan (dummy)`);
+    alert(`Ekspor ke ${type.toUpperCase()} belum diimplementasikan`);
+  };
+
+  const getStatusDisplay = (statusCode: string) => {
+    return statusMap[statusCode] || { label: statusCode, color: "bg-gray-100 text-gray-700" };
   };
 
   return (
@@ -71,12 +62,12 @@ export default function TransactionsTable() {
       <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <CardTitle>Daftar Transaksi</CardTitle>
         <div className="flex flex-col md:flex-row gap-2 items-center">
-          <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari nama pelanggan/produk..." className="w-48" />
-          <select value={status} onChange={e => setStatus(e.target.value)} className="border rounded px-2 py-1 text-sm">
+          <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari nama/deskripsi..." className="w-48" />
+          <select value={status} onChange={e => setStatus(e.target.value)} className="border rounded px-2 py-1 text-sm bg-white dark:bg-gray-800">
             <option value="">Semua Status</option>
-            <option value="success">Berhasil</option>
-            <option value="pending">Pending</option>
-            <option value="failed">Gagal</option>
+            <option value="SUCCESS">Berhasil</option>
+            <option value="PENDING">Pending</option>
+            <option value="FAILED">Gagal</option>
           </select>
           <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-36" />
           <span>-</span>
@@ -87,55 +78,77 @@ export default function TransactionsTable() {
         </div>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>No</TableHead>
-              <TableHead>ID Trx</TableHead>
-              <TableHead>Trx Dari</TableHead>
-              <TableHead>Pelanggan</TableHead>
-              <TableHead>Produk</TableHead>
-              <TableHead>Tanggal</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Total Harga</TableHead>
-              <TableHead>Aksi</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginated.map((trx, idx) => (
-              <TableRow key={trx.id}>
-                <TableCell>{(page - 1) * pageSize + idx + 1}</TableCell>
-                <TableCell className="font-medium">{trx.idTrx}</TableCell>
-                <TableCell>{trx.trxDari}</TableCell>
-                <TableCell>{trx.customer}</TableCell>
-                <TableCell>{trx.product}</TableCell>
-                <TableCell>{trx.date}</TableCell>
-                <TableCell>
-                  <span className={`px-2 py-1 rounded text-xs ${statusMap[trx.status].color}`}>{statusMap[trx.status].label}</span>
-                </TableCell>
-                <TableCell>Rp {trx.total.toLocaleString("id-ID")}</TableCell>
-                <TableCell>
-                  <Button size="icon" variant="ghost" onClick={() => setDetailId(trx.id)}><FiEye /></Button>
-                </TableCell>
-              </TableRow>
-            ))}
-            {paginated.length === 0 && (
+        {isError && (
+          <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
+            Gagal mengambil data transaksi: {(error as Error).message}
+          </div>
+        )}
+        
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-gray-400">Tidak ada data</TableCell>
+                <TableHead>No</TableHead>
+                <TableHead>ID Trx</TableHead>
+                <TableHead>Tipe</TableHead>
+                <TableHead>Pelanggan</TableHead>
+                <TableHead>Produk/Deskripsi</TableHead>
+                <TableHead>Tanggal</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Total Harga</TableHead>
+                <TableHead>Aksi</TableHead>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={9} className="text-center py-8 text-gray-500">Memuat data...</TableCell>
+                </TableRow>
+              ) : transactions.length > 0 ? (
+                transactions.map((trx, idx) => {
+                  const statusDisplay = getStatusDisplay(trx.status);
+                  return (
+                    <TableRow key={trx.id}>
+                      <TableCell>{offset + idx + 1}</TableCell>
+                      <TableCell className="font-medium">{trx.id}</TableCell>
+                      <TableCell>{trx.type}</TableCell>
+                      <TableCell>{trx.userName || "Guest"}</TableCell>
+                      <TableCell>{trx.metadata?.productName || trx.description}</TableCell>
+                      <TableCell>{new Date(trx.createdAt).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded text-xs ${statusDisplay.color}`}>{statusDisplay.label}</span>
+                      </TableCell>
+                      <TableCell>Rp {trx.amount.toLocaleString("id-ID")}</TableCell>
+                      <TableCell>
+                        <Button size="icon" variant="ghost" onClick={() => setDetailId(trx.id)}><FiEye /></Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={9} className="text-center py-8 text-gray-400">Tidak ada data transaksi</TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
       {/* Pagination */}
-      <div className="flex justify-between items-center px-4 pb-4">
-        <span className="text-xs text-gray-500">Menampilkan {paginated.length ? ((page - 1) * pageSize + 1) : 0} - {(page - 1) * pageSize + paginated.length} dari {filtered.length} transaksi</span>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>Sebelumnya</Button>
-          <span className="text-xs px-2">Halaman {page} / {totalPage || 1}</span>
-          <Button variant="outline" size="sm" disabled={page === totalPage || totalPage === 0} onClick={() => setPage(p => p + 1)}>Berikutnya</Button>
+      {!isLoading && transactions.length > 0 && (
+        <div className="flex flex-col sm:flex-row justify-between items-center px-4 pb-4 gap-4">
+          <span className="text-xs text-gray-500">
+            Menampilkan {offset + 1} - {Math.min(offset + pageSize, totalItem)} dari {totalItem} transaksi
+          </span>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Sebelumnya</Button>
+            <span className="text-xs px-2 font-medium">Halaman {page} dari {totalPage > 0 ? totalPage : 1}</span>
+            <Button variant="outline" size="sm" disabled={page >= totalPage} onClick={() => setPage(p => p + 1)}>Berikutnya</Button>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Detail Dialog */}
       <Dialog open={!!detailId} onOpenChange={() => setDetailId(null)}>
         <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden">
           <div className="bg-gradient-to-r from-blue-600 to-blue-500 p-6 text-white">
@@ -152,72 +165,89 @@ export default function TransactionsTable() {
           
           {detailTrx && (
             <div className="p-6 space-y-6">
-              {/* Transaction Header */}
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-lg font-semibold">{detailTrx.product}</h3>
-                  <p className="text-sm text-gray-500">#{detailTrx.idTrx}</p>
+                  <h3 className="text-lg font-semibold">{detailTrx.metadata?.productName || detailTrx.description}</h3>
+                  <p className="text-sm text-gray-500">Trx ID: {detailTrx.id}</p>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusMap[detailTrx.status].color}`}>
-                  {statusMap[detailTrx.status].label}
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusDisplay(detailTrx.status).color}`}>
+                  {getStatusDisplay(detailTrx.status).label}
                 </span>
               </div>
 
-              {/* Transaction Details */}
               <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <p className="text-xs text-gray-500">Tanggal</p>
-                    <p className="font-medium">{new Date(detailTrx.date).toLocaleString('id-ID', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
+                    <p className="font-medium text-sm">{new Date(detailTrx.createdAt).toLocaleString('id-ID', {
+                      day: 'numeric', month: 'long', year: 'numeric',
+                      hour: '2-digit', minute: '2-digit'
                     })}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">Sumber</p>
-                    <p className="font-medium">{detailTrx.trxDari}</p>
+                    <p className="text-xs text-gray-500">Metode Bayar</p>
+                    <p className="font-medium text-sm">{detailTrx.paymentMethod || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Pelanggan</p>
+                    <p className="font-medium text-sm">{detailTrx.userName}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Tipe Transaksi</p>
+                    <p className="font-medium text-sm">{detailTrx.type}</p>
                   </div>
                 </div>
-                <div className="border-t border-gray-100 my-2"></div>
-                <div>
-                  <p className="text-xs text-gray-500">Pelanggan</p>
-                  <p className="font-medium">{detailTrx.customer}</p>
-                </div>
+                
+                {detailTrx.metadata?.dataNo && (
+                  <>
+                    <div className="border-t border-gray-100 my-2"></div>
+                    <div>
+                      <p className="text-xs text-gray-500">Tujuan (No/ID/Zone)</p>
+                      <p className="font-medium text-sm">
+                        {detailTrx.metadata.dataNo} 
+                        {detailTrx.metadata.dataId ? ` (${detailTrx.metadata.dataId})` : ""}
+                      </p>
+                    </div>
+                  </>
+                )}
+                
+                {detailTrx.metadata?.sn && (
+                  <div>
+                    <p className="text-xs text-gray-500">Serial Number / VSN</p>
+                    <p className="font-medium text-sm break-all">{detailTrx.metadata.sn}</p>
+                  </div>
+                )}
               </div>
 
-              {/* Payment Summary */}
               <div className="space-y-3">
                 <h4 className="font-medium">Ringkasan Pembayaran</h4>
-                <div className="space-y-2">
+                <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Subtotal</span>
-                    <span>Rp {detailTrx.total.toLocaleString('id-ID')}</span>
+                    <span>Rp {detailTrx.amount.toLocaleString('id-ID')}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Biaya Admin</span>
+                    <span className="text-gray-600">Biaya Layanan</span>
                     <span>Rp 0</span>
                   </div>
+                  {detailTrx.metadata?.profit !== undefined && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Estimasi Profit</span>
+                      <span className="text-green-600">Rp {Number(detailTrx.metadata.profit).toLocaleString('id-ID')}</span>
+                    </div>
+                  )}
                   <div className="border-t border-gray-200 my-1"></div>
-                  <div className="flex justify-between font-semibold">
+                  <div className="flex justify-between font-semibold text-base">
                     <span>Total</span>
-                    <span>Rp {detailTrx.total.toLocaleString('id-ID')}</span>
+                    <span>Rp {detailTrx.amount.toLocaleString('id-ID')}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Actions */}
               <div className="pt-4 flex gap-3">
                 <Button variant="outline" className="flex-1" onClick={() => setDetailId(null)}>
                   Tutup
                 </Button>
-                {detailTrx.status === 'pending' && (
-                  <Button className="flex-1 bg-blue-600 hover:bg-blue-700">
-                    Proses Pembayaran
-                  </Button>
-                )}
               </div>
             </div>
           )}

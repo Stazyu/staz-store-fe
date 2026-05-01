@@ -3,22 +3,27 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { FiMenu, FiX, FiChevronDown, FiLogOut } from 'react-icons/fi';
-import ThemeToggle from '../ThemeToogle';
-import { useSession, signOut } from 'next-auth/react';
+import ThemeToggle from '../common/ThemeToggle';
+import { useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+import authClient from '@/lib/auth-client';
+import { isAdmin } from '@/lib/roles';
+import { useAuthSession } from '@/hooks/useAuthSession';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const router = useRouter();
 
-  const { data: session, status } = useSession();
+  const { data: session, error, isPending } = useAuthSession();
   const user = session?.user;
   const isAuthenticated = !!session;
-  console.log(status);
 
-  const loading = status === 'loading';
-  const tokenExpired = session?.error === 'AccessTokenExpired' || session?.error === 'RefreshTokenExpired' || session?.error === 'SessionNotFound';
+  const loading = isPending;
+  const tokenExpired = error?.message === 'AccessTokenExpired' || error?.message === 'RefreshTokenExpired' || error?.message === 'SessionNotFound';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,6 +32,16 @@ export default function Navbar() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await authClient.signOut();
+      await queryClient.invalidateQueries({ queryKey: ['auth-session'] });
+      router.refresh();
+    } catch (error) {
+      console.error('Logout error', error);
+    }
+  };
 
   const toggleSubmenu = (name: string) => {
     setOpenSubmenus(prev => ({
@@ -38,7 +53,6 @@ export default function Navbar() {
   const closeAllSubmenus = () => {
     setOpenSubmenus({});
   };
-
 
   const navLinks = [
     { name: 'Beranda', href: '/' },
@@ -80,9 +94,9 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <div className="flex-shrink-0 flex items-center">
+          <div className="shrink-0 flex items-center">
             <Link href="/" className="text-2xl font-bold">
-              <span className="bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-blue-600 via-purple-500 to-pink-500 bg-clip-text text-transparent">
                 StazStore
               </span>
             </Link>
@@ -138,7 +152,7 @@ export default function Navbar() {
 
           {/* Right side buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            {isAuthenticated && !tokenExpired && user?.role?.toLowerCase() === 'admin' && (
+            {isAuthenticated && !tokenExpired && isAdmin(user?.role) && (
               <Link
                 href="/admin/dashboard"
                 className="text-gray-700 dark:text-gray-200 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium flex items-center"
@@ -184,7 +198,7 @@ export default function Navbar() {
                       </Link>
                       <button
                         onClick={() => {
-                          signOut();
+                          handleLogout();
                           setIsProfileOpen(false);
                         }}
                         className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center"
@@ -197,15 +211,15 @@ export default function Navbar() {
                 )}
               </div>
             ) : loading ? (
-              <div className="relative overflow-hidden group bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-all hover:shadow-lg hover:shadow-blue-500/20">
+              <div className="relative overflow-hidden group bg-linear-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-all hover:shadow-lg hover:shadow-blue-500/20">
                 <span className="relative z-10">Loading...</span>
-                <span className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                <span className="absolute inset-0 bg-linear-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
               </div>
             ) : (
               <>
-                <Link href="/auth/login" className="relative overflow-hidden group bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-all hover:shadow-lg hover:shadow-blue-500/20">
+                <Link href="/auth/login" className="relative overflow-hidden group bg-linear-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-all hover:shadow-lg hover:shadow-blue-500/20">
                   <span className="relative z-10">Masuk / Daftar</span>
-                  <span className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                  <span className="absolute inset-0 bg-linear-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
                 </Link>
               </>
             )}
@@ -300,7 +314,7 @@ export default function Navbar() {
                   >
                     Riwayat Transaksi
                   </Link>
-                  {user?.role === 'admin' && (
+                  {/* {user?.role === 'admin' && (
                     <Link
                       href="/admin/dashboard"
                       className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md"
@@ -308,10 +322,10 @@ export default function Navbar() {
                     >
                       Dashboard Admin
                     </Link>
-                  )}
+                  )} */}
                   <button
                     onClick={() => {
-                      signOut();
+                      handleLogout();
                       setIsOpen(false);
                     }}
                     className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md flex items-center"

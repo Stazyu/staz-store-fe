@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FiMail, FiLock, FiUser, FiPhone, FiAlertCircle, FiArrowLeft, FiCheck, FiEye, FiEyeOff } from 'react-icons/fi';
+import authClient from '@/lib/auth-client';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -17,7 +18,7 @@ export default function RegisterPage() {
     confirmPassword: '',
     terms: false
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -101,45 +102,36 @@ export default function RegisterPage() {
     setErrors({}); // Clear previous errors
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API;
-      if (!apiUrl) {
-        throw new Error('API URL is not configured');
-      }
 
       // Format phone number to ensure it starts with +62
       const formattedPhone = formatPhoneNumber(formData.phone);
 
-      const response = await fetch(`${apiUrl}/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          phone_number: formattedPhone,
-          password: formData.password,
-        }),
-      });
+      const res = await authClient.signUp.email({
+        email: formData.email,
+        password: formData.password,
+        name: formData.name,
+        phoneNumber: formattedPhone
+      })
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        // Handle validation errors from the server
-        if (response.status === 422 && data.errors) {
-          const serverErrors: Record<string, string> = {};
-          Object.entries(data.errors).forEach(([field, messages]) => {
-            serverErrors[field] = Array.isArray(messages) ? messages[0] : String(messages);
-          });
-          setErrors(serverErrors);
-        } else {
-          throw new Error(data.message || 'Gagal melakukan pendaftaran');
-        }
-        return;
+      if (res.error) {
+        setErrors({
+          submit: res.error.message || "Something went wrong.",
+        });
+      } else {
+        // Sync user to database
+        // async function syncUser() {
+        //   await fetch('/api/sync-user', {
+        //     method: 'GET',
+        //     headers: {
+        //       'Content-Type': 'application/json',
+        //     }
+        //   });
+        // }
+        // syncUser();
+        // Registration successful
+        router.push("/auth/login?registered=true");
       }
 
-      // Registration successful
-      router.push('/auth/login?registered=true');
     } catch (error) {
       console.error('Registration error:', error);
       setErrors({
@@ -151,10 +143,10 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-fit flex items-start justify-start rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-fit flex items-start justify-start rounded-2xl bg-linear-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <div className="w-full max-w-md">
         <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-2xl shadow-xl overflow-hidden">
-          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-center">
+          <div className="bg-linear-to-r from-indigo-600 to-purple-600 p-6 text-center">
             <h1 className="text-2xl font-bold text-white">Buat Akun Baru</h1>
             <p className="text-indigo-100 mt-1">Bergabung bersama kami hari ini</p>
           </div>
@@ -170,7 +162,7 @@ export default function RegisterPage() {
 
             {errors.submit && (
               <div className="mb-6 p-4 bg-red-500/10 backdrop-blur-sm border border-red-500/20 rounded-lg text-red-600 dark:text-red-300 text-sm flex items-start animate-fade-in">
-                <FiAlertCircle className="flex-shrink-0 mt-0.5 mr-2" />
+                <FiAlertCircle className="shrink-0 mt-0.5 mr-2" />
                 <span>{errors.submit}</span>
               </div>
             )}
@@ -359,7 +351,7 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={isLoading || !formData.terms}
-                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-medium py-3.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
+                className="w-full bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-medium py-3.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
               >
                 {isLoading ? (
                   <span className="flex items-center justify-center">

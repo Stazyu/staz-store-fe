@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 export async function POST(req: Request) {
   const { email, password } = await req.json();
 
-  const res = await fetch(`${process.env.BACKEND_URL}/auth/login`, {
+  const res = await fetch(`${process.env.BACKEND_URL}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
@@ -13,8 +13,6 @@ export async function POST(req: Request) {
   if (!res.ok) {
     return NextResponse.json({ message: 'Login gagal' }, { status: 401 });
   }
-
-  console.log(res);
 
   const { token } = await res.json();
 

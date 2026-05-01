@@ -4,27 +4,29 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FiMail, FiLock, FiAlertCircle, FiArrowLeft } from 'react-icons/fi';
-import { signIn, useSession } from 'next-auth/react';
+import { useQueryClient } from '@tanstack/react-query';
+import authClient from '@/lib/auth-client';
 
 export default function LoginForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const queryClient = useQueryClient();
     const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
         email: '',
         password: ''
     });
-    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [errors, setErrors] = useState<Record<string, string | undefined>>({});
     const [isLoading, setIsLoading] = useState(false);
     const registered = searchParams.get('registered') === 'true';
-    const { status } = useSession();
+    const { data: session } = authClient.useSession();
 
 
     useEffect(() => {
-        if (status === 'unauthenticated') {
-            router.push('/auth/login');
+        if (session) {
+            router.push('/');
         }
-    }, [status, router]);
+    }, [session, router]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -42,7 +44,7 @@ export default function LoginForm() {
     };
 
     const validateForm = () => {
-        const newErrors: Record<string, string> = {};
+        const newErrors: Record<string, string | undefined> = {};
 
         if (!formData.email) {
             newErrors.email = 'Email diperlukan';
@@ -63,22 +65,21 @@ export default function LoginForm() {
 
         setIsLoading(true);
         try {
-            const res = await signIn('credentials', {
+            const res = await authClient.signIn.email({
                 email: formData.email,
                 password: formData.password,
-                redirect: false,
-            });
+            })
 
             if (res?.error) {
                 try {
-                    const { status, message } = JSON.parse(res.error);
+                    const { status, message, code } = res.error;
 
                     switch (status) {
                         case 401:
                             setErrors({ submit: 'Email atau password salah.' });
                             break;
                         case 403:
-                            setErrors({ submit: 'Akses ditolak.' });
+                            setErrors({ submit: code === 'BANNED_USER' ? 'Anda telah diblokir dari aplikasi ini. Silakan hubungi dukungan jika Anda yakin ini adalah kesalahan.' : 'Akses ditolak.' });
                             break;
                         case 404:
                             setErrors({ submit: 'Akun tidak ditemukan.' });
@@ -87,16 +88,18 @@ export default function LoginForm() {
                             setErrors({ submit: 'Terlalu banyak percobaan login. Coba lagi nanti.' });
                             break;
                         case 500:
-                            setErrors({ submit: 'Terjadi kesalahan pada server. Silakan coba lagi.' });
+                            setErrors({ submit: 'Terjadi kesalahan pada server. Silakan hubungi admin.' });
                             break;
                         default:
                             setErrors({ submit: `${status} - ${message}` });
                     }
                 } catch {
-                    setErrors({ submit: res.error });
+                    setErrors({ submit: res.error.message });
                 }
             } else {
+                await queryClient.invalidateQueries({ queryKey: ['auth-session'] });
                 router.push('/');
+                router.refresh();
             }
         } catch (error) {
             console.error('Login error:', error);
@@ -108,10 +111,10 @@ export default function LoginForm() {
 
 
     return (
-        <div className="min-h-fit flex items-start justify-start bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 rounded-2xl">
+        <div className="min-h-fit flex items-start justify-start bg-linear-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 rounded-2xl">
             <div className="w-full max-w-md">
                 <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-2xl shadow-xl overflow-hidden">
-                    <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-center">
+                    <div className="bg-linear-to-r from-indigo-600 to-purple-600 p-6 text-center">
                         <h1 className="text-2xl font-bold text-white">Selamat Datang Kembali</h1>
                         <p className="text-indigo-100 mt-1">Silakan masuk ke akun Anda</p>
                     </div>
@@ -212,7 +215,7 @@ export default function LoginForm() {
                                 </div>
 
                                 <div className="text-sm">
-                                    <Link href="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
+                                    <Link href="/auth/forgot-password" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
                                         Lupa kata sandi?
                                     </Link>
                                 </div>

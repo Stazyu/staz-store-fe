@@ -1,6 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import toast from 'react-hot-toast';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -8,42 +11,80 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { FiEdit2, FiTrash2, FiPlus, FiEye, FiLoader } from "react-icons/fi";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { fetchCategories, createCategory, updateCategory, deleteCategory, Category } from "@/services/category.client";
-import toast from 'react-hot-toast';
+import { fetchCategories, createCategory, updateCategory, deleteCategory } from "@/services/category.client";
+import { Category, CreateCategoryDto } from "@/types/category";
+
 
 export default function CategoryTable() {
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const queryClient = useQueryClient();
     const [open, setOpen] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [editId, setEditId] = useState<string | null>(null);
     const [detailId, setDetailId] = useState<string | null>(null);
     const [name, setName] = useState("");
+    const [displayName, setDisplayName] = useState<null | string>(null);
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+
+    // Additional state for form errors if needed, though toast is used mostly
+    const [formError, setFormError] = useState<string | null>(null);
+
     const pageSize = 4;
-    useEffect(() => {
-        const loadCategories = async () => {
-            try {
-                setIsLoading(true);
-                const data = await fetchCategories();
-                setCategories(data);
-                setError(null);
-            } catch (err) {
-                console.error('Failed to load categories:', err);
-                setError('Gagal memuat kategori. Silakan coba lagi nanti.');
-            } finally {
-                setIsLoading(false);
-            }
-        };
 
-        loadCategories();
-    }, []);
+    // Fetch Categories
+    const { data: categories = [], isLoading, error } = useQuery({
+        queryKey: ['categories-list'],
+        queryFn: fetchCategories,
+    });
 
-    // Chart data using actual brand count from API
+    // Mutations
+    const createMutation = useMutation({
+        mutationFn: (data: CreateCategoryDto) => createCategory(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['categories-list'] });
+            setOpen(false);
+            toast.success('Kategori berhasil ditambahkan');
+            setName("");
+        },
+        onError: (err) => {
+            console.error('Failed to create category:', err);
+            setFormError('Gagal menambahkan kategori');
+            toast.error('Gagal menambahkan kategori');
+        }
+    });
+
+    const updateMutation = useMutation({
+        mutationFn: ({ id, data }: { id: string, data: Partial<CreateCategoryDto> }) => updateCategory(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['categories-list'] });
+            setOpen(false);
+            toast.success('Kategori berhasil diperbarui');
+            setName("");
+            setEditId(null);
+        },
+        onError: (err) => {
+            console.error('Failed to update category:', err);
+            setFormError('Gagal memperbarui kategori');
+            toast.error('Gagal memperbarui kategori');
+        }
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: deleteCategory,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['categories-list'] });
+            setDeleteModalOpen(false);
+            setCategoryToDelete(null);
+            toast.success('Kategori berhasil dihapus');
+        },
+        onError: (err) => {
+            console.error('Failed to delete category:', err);
+            toast.error('Gagal menghapus, kategori mungkin masih terhubung dengan brand');
+        }
+    });
+
+    // Chart data
     const chartData = categories.map(cat => ({
         name: cat.name,
         value: cat.brandCount || 0
@@ -60,41 +101,31 @@ export default function CategoryTable() {
     const handleEdit = (cat: Category) => {
         setEditId(cat.id);
         setName(cat.name);
+        setDisplayName(cat.displayName || "");
+        setFormError(null);
         setOpen(true);
     };
 
     const handleAdd = () => {
         setEditId(null);
         setName("");
+        setDisplayName("");
+        setFormError(null);
         setOpen(true);
     };
 
     const handleSave = async () => {
-        try {
-            setIsSubmitting(true);
-            if (editId) {
-                const updatedCategory = await updateCategory(editId, {
-                    name,
-                    brandCount: 0,
-                    is_active: true
-                } as Omit<Category, 'id'>);
-                setCategories(cats =>
-                    cats.map(c => c.id === editId ? updatedCategory : c)
-                );
-            } else {
-                const newCategory = await createCategory({
-                    name,
-                    brandCount: 0,
-                    is_active: true
-                } as Omit<Category, 'id'>);
-                setCategories(cats => [...cats, newCategory]);
-            }
-            setOpen(false);
-        } catch (err) {
-            console.error('Failed to save category:', err);
-            setError(editId ? 'Gagal memperbarui kategori' : 'Gagal menambahkan kategori');
-        } finally {
-            setIsSubmitting(false);
+        if (!name.trim() && !displayName?.trim()) return;
+
+        const payload = {
+            name,
+            displayName: displayName?.trim() || undefined,
+        };
+
+        if (editId) {
+            updateMutation.mutate({ id: editId, data: payload });
+        } else {
+            createMutation.mutate(payload);
         }
     };
 
@@ -103,21 +134,9 @@ export default function CategoryTable() {
         setDeleteModalOpen(true);
     };
 
-    const handleConfirmDelete = async () => {
-        if (!categoryToDelete) return;
-
-        try {
-            setIsSubmitting(true);
-            await deleteCategory(categoryToDelete);
-            setCategories(cats => cats.filter(c => c.id !== categoryToDelete));
-            toast.success('Kategori berhasil dihapus');
-        } catch (err) {
-            console.error('Failed to delete category:', err);
-            toast.error('Gagal menghapus, kategori masih terhubung dengan brand');
-        } finally {
-            setIsSubmitting(false);
-            setDeleteModalOpen(false);
-            setCategoryToDelete(null);
+    const handleConfirmDelete = () => {
+        if (categoryToDelete) {
+            deleteMutation.mutate(categoryToDelete);
         }
     };
 
@@ -125,6 +144,8 @@ export default function CategoryTable() {
         setDeleteModalOpen(false);
         setCategoryToDelete(null);
     };
+
+    const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
     return (
         <div className="space-y-6">
@@ -137,7 +158,6 @@ export default function CategoryTable() {
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="name" />
                             <YAxis allowDecimals={false} />
-                            {/* <Tooltip formatter={(value) => [value, 'Brand']} labelFormatter={(label) => `Jumlah Brand: ${label}`} contentStyle={{ backgroundColor: '#' }} labelStyle={{ color: '#3b82f6' }} /> */}
                             <Tooltip contentStyle={{ backgroundColor: '#000' }} labelStyle={{ color: '#3b82f6' }} />
                             <Bar dataKey="value" fill="#3b82f6" />
                         </BarChart>
@@ -157,7 +177,8 @@ export default function CategoryTable() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>No</TableHead>
-                                <TableHead>Nama Kategori</TableHead>
+                                <TableHead>Name</TableHead>
+                                {/* <TableHead>Display Name</TableHead> */}
                                 <TableHead className="text-center">Total Brand</TableHead>
                                 <TableHead>Aksi</TableHead>
                             </TableRow>
@@ -174,7 +195,7 @@ export default function CategoryTable() {
                             ) : error ? (
                                 <TableRow>
                                     <TableCell colSpan={4} className="text-center text-red-500 py-4">
-                                        {error}
+                                        {(error as Error).message || 'Terjadi kesalahan saat memuat data'}
                                     </TableCell>
                                 </TableRow>
                             ) : paginated.length === 0 ? (
@@ -188,6 +209,11 @@ export default function CategoryTable() {
                                     <TableRow key={cat.id}>
                                         <TableCell>{(page - 1) * pageSize + idx + 1}</TableCell>
                                         <TableCell>{cat.name}</TableCell>
+                                        {/* <TableCell>
+                                            <code className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md font-mono border border-gray-200 dark:border-gray-700">
+                                                {cat.displayName}
+                                            </code>
+                                        </TableCell> */}
                                         <TableCell className="text-center">
                                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-white">
                                                 {cat.brandCount || 0}
@@ -221,8 +247,9 @@ export default function CategoryTable() {
                         </DialogHeader>
                         {detailCat && (
                             <div className="space-y-2">
-                                <div><strong>Nama:</strong> {detailCat.name}</div>
-                                <div><strong>Jumlah Produk:</strong> {chartData.find(c => c.name === detailCat.name)?.value}</div>
+                                <div><strong>Name:</strong> {detailCat.name}</div>
+                                <div><strong>Display Name:</strong> {detailCat.displayName || '-'}</div>
+                                <div><strong>Total Brand:</strong> {chartData.find(c => c.name === detailCat.name)?.value}</div>
                             </div>
                         )}
                     </DialogContent>
@@ -235,16 +262,25 @@ export default function CategoryTable() {
                         </DialogHeader>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium mb-1">Nama Kategori</label>
+                                <label className="block text-sm font-medium mb-1">Name</label>
                                 <Input
                                     value={name}
                                     onChange={e => setName(e.target.value)}
-                                    placeholder="Nama kategori"
+                                    placeholder="Name"
                                     disabled={isSubmitting}
                                 />
                             </div>
-                            {error && (
-                                <div className="text-red-500 text-sm">{error}</div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Display Name (Optional)</label>
+                                <Input
+                                    value={displayName || ''}
+                                    onChange={e => setDisplayName(e.target.value === '' ? null : e.target.value)}
+                                    placeholder="Display Name"
+                                    disabled={isSubmitting}
+                                />
+                            </div>
+                            {formError && (
+                                <div className="text-red-500 text-sm">{formError}</div>
                             )}
                             <DialogFooter>
                                 <Button
@@ -269,6 +305,7 @@ export default function CategoryTable() {
                         </div>
                     </DialogContent>
                 </Dialog>
+
             </Card>
 
             {/* Delete Confirmation Modal */}
@@ -284,15 +321,15 @@ export default function CategoryTable() {
                         </p>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={handleCancelDelete} disabled={isSubmitting}>
+                        <Button variant="outline" onClick={handleCancelDelete} disabled={deleteMutation.isPending}>
                             Batal
                         </Button>
                         <Button
                             variant="destructive"
                             onClick={handleConfirmDelete}
-                            disabled={isSubmitting}
+                            disabled={deleteMutation.isPending}
                         >
-                            {isSubmitting ? 'Menghapus...' : 'Hapus'}
+                            {deleteMutation.isPending ? 'Menghapus...' : 'Hapus'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

@@ -4,7 +4,6 @@ import dynamic from 'next/dynamic';
 import HeroSection from '@/components/sections/HeroSection';
 // import FlashSale from '@/components/flashSale/FlashSaleSection';
 import HeroBanner from '@/components/home/HeroBanner';
-import * as React from "react"
 
 // Dynamically import the PromoSlider to avoid SSR issues with Swiper
 const PromoSlider = dynamic(() => import('@/components/home/PromoSlider'), {

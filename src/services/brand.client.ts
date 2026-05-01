@@ -1,4 +1,5 @@
-// Client-side service untuk memanggil API routes Next.js
+import { fetchWithJwt } from "@/lib/api-client";
+
 export interface CategoryObject {
     id: number;
     name: string;
@@ -13,16 +14,36 @@ export interface PublisherObject {
     updatedAt?: string;
 }
 
+export interface BrandMargin {
+    tierId: string;
+    percentage: number;
+}
+
+export interface BrandType {
+    id: string;
+    name: string;
+    code: string;
+    prefix: string;
+}
+
 export interface Brand {
-    id: number;
+    id: string;
     name: string;
     code: string;
     category?: string | CategoryObject;
     categoryId: string;
     publisher: string | PublisherObject;
-    logo?: string;
-    type?: string;
+    logo?: string | null;
+    profitMethod?: string;
+    margins?: BrandMargin[];
+    isManualProcess?: boolean;
     isActive?: boolean;
+    topLevelCategory?: boolean;
+    types?: BrandType[];
+    _count?: {
+        products: number;
+        types: number;
+    };
     createdAt?: string;
     updatedAt?: string;
 }
@@ -34,7 +55,7 @@ export interface ApiResponse<T> {
     brands?: T[];
 }
 
-const API_BASE_URL = '/api/brands';
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/brands`;
 
 export const fetchBrands = async (): Promise<Brand[]> => {
     try {
@@ -50,14 +71,14 @@ export const fetchBrands = async (): Promise<Brand[]> => {
             throw new Error(data.message || 'Gagal mengambil data brand');
         }
 
-        return data.brands || [];
+        return data.data as unknown as Brand[] || data.brands || [];
     } catch (error) {
         console.error('Error in fetchBrands:', error);
         throw error;
     }
 };
 
-export const fetchBrandById = async (id: number): Promise<Brand> => {
+export const fetchBrandById = async (id: string): Promise<Brand> => {
     try {
         const response = await fetch(`${API_BASE_URL}/${id}`, {
             method: 'GET',
@@ -80,13 +101,13 @@ export const fetchBrandById = async (id: number): Promise<Brand> => {
 
 export const createBrand = async (brandData: Omit<Brand, 'id' | 'createdAt' | 'updatedAt'>): Promise<Brand> => {
     try {
-        const response = await fetch(API_BASE_URL, {
+        const response = await fetchWithJwt(API_BASE_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            credentials: 'include',
             body: JSON.stringify(brandData),
+            credentials: 'include',
         });
 
         const data = await response.json();
@@ -94,7 +115,6 @@ export const createBrand = async (brandData: Omit<Brand, 'id' | 'createdAt' | 'u
         if (!response.ok) {
             throw new Error(data.message || 'Gagal membuat brand baru');
         }
-        console.log(data.brand);
 
         return data.brand!;
     } catch (error) {
@@ -103,20 +123,18 @@ export const createBrand = async (brandData: Omit<Brand, 'id' | 'createdAt' | 'u
     }
 };
 
-export const updateBrand = async (id: number, brandData: Partial<Brand>): Promise<Brand> => {
+export const updateBrand = async (id: string, brandData: Partial<Brand>): Promise<Brand> => {
     try {
-        const response = await fetch(`${API_BASE_URL}/${id}`, {
+        const response = await fetchWithJwt(`${API_BASE_URL}/${id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
             },
-            credentials: 'include',
             body: JSON.stringify(brandData),
+            credentials: 'include',
         });
 
         const data = await response.json();
-        console.log(data);
-
         if (!response.ok) {
             throw new Error(data.message || 'Gagal memperbarui brand');
         }
@@ -128,9 +146,9 @@ export const updateBrand = async (id: number, brandData: Partial<Brand>): Promis
     }
 };
 
-export const deleteBrand = async (id: number): Promise<void> => {
+export const deleteBrand = async (id: string): Promise<void> => {
     try {
-        const response = await fetch(`${API_BASE_URL}/${id}`, {
+        const response = await fetchWithJwt(`${API_BASE_URL}/${id}`, {
             method: 'DELETE',
             credentials: 'include',
         });

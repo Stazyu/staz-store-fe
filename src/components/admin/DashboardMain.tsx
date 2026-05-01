@@ -8,6 +8,10 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FiDownload, FiRefreshCw, FiTrendingUp, FiShoppingCart, FiUsers, FiActivity, FiCheckCircle, FiClock, FiXCircle } from "react-icons/fi";
 import { DashboardSummary, calculateTodaysSummary } from "./DashboardSummary";
+import { fetchRecentTransactions } from "@/services/transaction.client";
+import { useQuery } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
+import { id as idLocale } from "date-fns/locale";
 import { useTheme } from "next-themes";
 
 // Dummy data for today's transactions
@@ -91,12 +95,19 @@ const totalTransactions = categoryTransactions.reduce((sum, cat) => sum + cat.co
 
 export default function DashboardMain() {
   const { theme } = useTheme();
+  
+  const { data: recentRes, isLoading: isLoadingRecent } = useQuery({
+    queryKey: ['recentTransactions'],
+    queryFn: () => fetchRecentTransactions(5),
+  });
+  
+  const recentTransactions = recentRes?.data || [];
 
   return (
     <div className="space-y-6">
       {/* Modern Header with Gradient */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-8 shadow-2xl">
-        <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]" />
+      <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-blue-600 via-blue-700 to-indigo-800 p-8 shadow-2xl">
+        <div className="absolute inset-0 bg-grid-white/[0.05] bg-size-[20px_20px]" />
         <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white flex items-center gap-3">
@@ -230,29 +241,37 @@ export default function DashboardMain() {
           </CardHeader>
           <CardContent className="pt-4">
             <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2">
-              {recentActivities.map((activity) => (
-                <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                  <div className={`mt-1 rounded-full p-2 ${
-                    activity.status === 'success' ? 'bg-green-100 dark:bg-green-900/30' :
-                    activity.status === 'pending' ? 'bg-yellow-100 dark:bg-yellow-900/30' :
-                    'bg-red-100 dark:bg-red-900/30'
-                  }`}>
-                    {activity.status === 'success' && <FiCheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />}
-                    {activity.status === 'pending' && <FiClock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />}
-                    {activity.status === 'failed' && <FiXCircle className="h-4 w-4 text-red-600 dark:text-red-400" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{activity.user}</p>
-                    <p className="text-xs text-muted-foreground truncate">{activity.action}</p>
-                    <div className="flex items-center justify-between mt-1">
-                      <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">
-                        Rp {activity.amount.toLocaleString('id-ID')}
-                      </span>
-                      <span className="text-xs text-muted-foreground">{activity.time}</span>
+              {isLoadingRecent ? (
+                <div className="text-center py-4 text-gray-500">Memuat aktivitas...</div>
+              ) : recentTransactions.length > 0 ? (
+                recentTransactions.map((trx) => (
+                  <div key={trx.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                    <div className={`mt-1 rounded-full p-2 ${
+                        trx.status === 'SUCCESS' ? 'bg-green-100 dark:bg-green-900/30' :
+                        trx.status === 'PENDING' ? 'bg-yellow-100 dark:bg-yellow-900/30' :
+                        'bg-red-100 dark:bg-red-900/30'
+                      }`}>
+                      {trx.status === 'SUCCESS' && <FiCheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />}
+                      {trx.status === 'PENDING' && <FiClock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />}
+                      {trx.status === 'FAILED' && <FiXCircle className="h-4 w-4 text-red-600 dark:text-red-400" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{trx.userName || "Guest"}</p>
+                      <p className="text-xs text-muted-foreground truncate">{trx.metadata?.productName || trx.description}</p>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">
+                          Rp {trx.amount.toLocaleString('id-ID')}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(trx.createdAt), { addSuffix: true, locale: idLocale })}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <div className="text-center py-4 text-gray-500">Tidak ada aktivitas.</div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -370,15 +389,15 @@ export default function DashboardMain() {
                       key={`cell-${index}`}
                       fill={
                         entry.name === 'Berhasil' ? 'url(#successGradient)' :
-                        entry.name === 'Pending' ? 'url(#pendingGradient)' :
-                        'url(#failedGradient)'
+                          entry.name === 'Pending' ? 'url(#pendingGradient)' :
+                            'url(#failedGradient)'
                       }
                     />
                   ))}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-            
+
             {/* Status Summary Cards */}
             <div className="grid grid-cols-3 gap-3 mt-6">
               {statusBreakdown.map((status) => (
