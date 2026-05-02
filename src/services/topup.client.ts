@@ -1,5 +1,5 @@
 import { fetchWithJwt } from '@/lib/api-client';
-import { TopupInvoice, CreateInvoiceDto, DirectAdjustmentDto, BalanceResponse } from '@/types/topup';
+import { TopupInvoice, CreateInvoiceDto, DirectAdjustmentDto, BalanceResponse, AdminInvoicesParams, AdminInvoicesResponse } from '@/types/topup';
 
 const API_BASE_URL = process.env.NODE_ENV === 'production'
     ? '/api/v1/topups'
@@ -99,6 +99,34 @@ export const getAllInvoices = async (): Promise<TopupInvoice[]> => {
         const resData = await response.json();
         if (!response.ok) throw new Error(resData.message || 'Gagal mengambil data riwayat top up');
         return resData.data || resData || [];
+    } catch (error) {
+        throw error;
+    }
+};
+
+export const getAdminInvoices = async (params: AdminInvoicesParams = {}): Promise<AdminInvoicesResponse> => {
+    const searchParams = new URLSearchParams();
+    if (params.status) searchParams.set('status', params.status);
+    if (params.userId) searchParams.set('userId', params.userId);
+    if (params.paymentMethod) searchParams.set('paymentMethod', params.paymentMethod);
+    if (params.search) searchParams.set('search', params.search);
+    if (params.startDate) searchParams.set('startDate', params.startDate);
+    if (params.endDate) searchParams.set('endDate', params.endDate);
+    if (params.limit !== undefined) searchParams.set('limit', String(params.limit));
+    if (params.offset !== undefined) searchParams.set('offset', String(params.offset));
+
+    const qs = searchParams.toString();
+    const url = `${API_BASE_URL}/admin/invoices${qs ? `?${qs}` : ''}`;
+
+    try {
+        const response = await fetchWithJwt(url, {
+            method: 'GET',
+            credentials: 'include',
+            cache: 'no-store',
+        });
+        const resData = await response.json();
+        if (!response.ok) throw new Error(resData.message || 'Gagal mengambil data invoice admin');
+        return resData;
     } catch (error) {
         throw error;
     }
