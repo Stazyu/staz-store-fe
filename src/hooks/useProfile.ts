@@ -5,16 +5,16 @@ export function useProfile() {
     return useQuery({
         queryKey: ['profile'],
         queryFn: async () => {
-            // const response = await fetch('/api/profile', {
-            //     credentials: 'include',
-            // });
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/users/profile`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+            const response = await fetch('/api/profile', {
                 credentials: 'include',
             });
+            // const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/users/profile`, {
+            //     method: 'GET',
+            //     headers: {
+            //         'Content-Type': 'application/json',
+            //     },
+            //     credentials: 'include',
+            // });
             if (!response.ok) {
                 throw new Error('Failed to fetch profile');
             }
