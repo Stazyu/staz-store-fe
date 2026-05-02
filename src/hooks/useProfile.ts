@@ -18,7 +18,7 @@ export function useProfile() {
             if (!response.ok) {
                 throw new Error('Failed to fetch profile');
             }
-            const { user } = await response.json();
+            const user = await response.json();
             return user;
         },
         retry: false, // Don't retry if 401/404 avoids loop if not logged in
