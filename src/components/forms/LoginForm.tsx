@@ -68,7 +68,7 @@ export default function LoginForm() {
             const res = await authClient.signIn.email({
                 email: formData.email,
                 password: formData.password,
-            })
+            }, { credentials: 'include' })
 
             if (res?.error) {
                 try {

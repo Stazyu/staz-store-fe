@@ -1,7 +1,9 @@
 import { Category, CreateCategoryDto, ApiResponse, CategoryListResponse, CategoryByIdResponse } from '@/types/category';
 import { fetchWithJwt } from '@/lib/api-client';
 
-const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/categories`;
+const API_BASE_URL = process.env.NODE_ENV === 'production'
+    ? '/api/v1/categories'
+    : `${process.env.NEXT_PUBLIC_API_URL}/api/v1/categories`;
 
 export const fetchCategories = async (): Promise<Category[]> => {
     try {

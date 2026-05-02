@@ -1,7 +1,9 @@
 import { fetchWithJwt } from '@/lib/api-client';
 import { TopupInvoice, CreateInvoiceDto, DirectAdjustmentDto, BalanceResponse } from '@/types/topup';
 
-const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/topups`;
+const API_BASE_URL = process.env.NODE_ENV === 'production'
+    ? '/api/v1/topups'
+    : `${process.env.NEXT_PUBLIC_API_URL}/api/v1/topups`;
 
 // --- USER ENDPOINTS ---
 

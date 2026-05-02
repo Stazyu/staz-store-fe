@@ -1,7 +1,9 @@
 import { User, UpdateUserDto, ApiResponse } from '@/types/user';
 import { fetchWithJwt } from '@/lib/api-client';
 
-const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/users`;
+const API_BASE_URL = process.env.NODE_ENV === 'production'
+    ? '/api/v1/users'
+    : `${process.env.NEXT_PUBLIC_API_URL}/api/v1/users`;
 
 export const fetchUsers = async (): Promise<User[]> => {
     try {

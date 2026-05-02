@@ -57,7 +57,9 @@ export interface FetchTransactionsParams {
     offset?: number;
 }
 
-const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/transactions`;
+const API_BASE_URL = process.env.NODE_ENV === 'production'
+    ? '/api/v1/transactions'
+    : `${process.env.NEXT_PUBLIC_API_URL}/api/v1/transactions`;
 
 export const fetchAdminTransactions = async (params: FetchTransactionsParams = {}): Promise<TransactionsResponse> => {
     try {

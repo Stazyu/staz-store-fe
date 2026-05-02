@@ -31,7 +31,7 @@ ENV BACKEND_URL=${BACKEND_URL}
 # Next.js collects telemetry — disable it during build
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN bun --bun run build
+RUN bun run build
 
 # ── Production ───────────────────────────────────────────────────────
 FROM oven/bun:1-slim AS production
@@ -61,4 +61,4 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["bun", "--bun", "server.js"]
+CMD ["bun", "server.js"]

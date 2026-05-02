@@ -1,16 +1,21 @@
 import { fetchWithJwt } from "@/lib/api-client";
 import { TypeItem, TypeApiResponse, TypeParams } from "@/types/type.types";
 
-const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/types`;
+const API_BASE_URL = process.env.NODE_ENV === 'production'
+    ? '/api/v1/types'
+    : `${process.env.NEXT_PUBLIC_API_URL}/api/v1/types`;
 
 export const fetchTypes = async (params?: TypeParams): Promise<TypeItem[]> => {
     try {
-        const url = new URL(API_BASE_URL);
-        if (params?.brandId) url.searchParams.append("brandId", params.brandId);
-        if (params?.categoryId) url.searchParams.append("categoryId", params.categoryId);
-        if (params?.search) url.searchParams.append("search", params.search);
+        const queryParams = new URLSearchParams();
+        if (params?.brandId) queryParams.append("brandId", params.brandId);
+        if (params?.categoryId) queryParams.append("categoryId", params.categoryId);
+        if (params?.search) queryParams.append("search", params.search);
 
-        const response = await fetch(url.toString(), {
+        const queryString = queryParams.toString();
+        const fullUrl = `${API_BASE_URL}${queryString ? `?${queryString}` : ''}`;
+
+        const response = await fetch(fullUrl, {
             method: 'GET',
             credentials: 'include',
             cache: 'no-store',

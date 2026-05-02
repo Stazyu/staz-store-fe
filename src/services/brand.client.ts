@@ -55,7 +55,9 @@ export interface ApiResponse<T> {
     brands?: T[];
 }
 
-const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/brands`;
+const API_BASE_URL = process.env.NODE_ENV === 'production'
+    ? '/api/v1/brands'
+    : `${process.env.NEXT_PUBLIC_API_URL}/api/v1/brands`;
 
 export const fetchBrands = async (): Promise<Brand[]> => {
     try {

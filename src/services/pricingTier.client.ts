@@ -15,7 +15,9 @@ export interface ApiResponse<T> {
     data: T;
 }
 
-const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/pricing-tiers`;
+const API_BASE_URL = process.env.NODE_ENV === 'production'
+    ? '/api/v1/pricing-tiers'
+    : `${process.env.NEXT_PUBLIC_API_URL}/api/v1/pricing-tiers`;
 
 export const fetchPricingTiers = async (): Promise<PricingTier[]> => {
     try {

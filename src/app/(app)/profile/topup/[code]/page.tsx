@@ -72,7 +72,7 @@ export default function TopupDetailPage() {
             <Badge className={statusData.class}>{statusData.label}</Badge>
           </div>
         </CardHeader>
-        
+
         <CardContent className="space-y-6 pt-6">
           {invoice.status === 'PENDING' && (
             <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 p-4 rounded-lg flex items-start gap-3">
@@ -86,7 +86,7 @@ export default function TopupDetailPage() {
 
           <div className="space-y-4">
             <h3 className="font-semibold text-lg border-b pb-2">Rincian Invoice</h3>
-            
+
             <div className="grid grid-cols-2 gap-y-4 text-sm">
               <div className="text-muted-foreground">Waktu Permintaan</div>
               <div className="font-medium text-right">
@@ -95,7 +95,7 @@ export default function TopupDetailPage() {
                   hour: '2-digit', minute: '2-digit'
                 })}
               </div>
-              
+
               <div className="text-muted-foreground">Metode Pembayaran</div>
               <div className="font-medium text-right">{invoice.paymentMethod === 'BCA_MANUAL' ? 'BCA (Manual)' : invoice.paymentMethod || 'Manual Transfer'}</div>
 
@@ -117,13 +117,13 @@ export default function TopupDetailPage() {
           </div>
         </CardContent>
       </Card>
-      
+
       {invoice.status === 'PENDING' && (
         <div className="text-center">
           <Button variant="outline" asChild className="w-full sm:w-auto">
-             <Link href={`https://wa.me/6281234567890?text=Halo%20Admin,%20saya%20sudah%20melakukan%20pembayaran%20untuk%20top%20up%20${invoice.invoiceCode}%20sebesar%20${formatCurrency(invoice.amount)}`} target="_blank">
-               Konfirmasi via WhatsApp
-             </Link>
+            <Link href={`https://wa.me/6281234567890?text=Halo%20Admin,%20saya%20sudah%20melakukan%20pembayaran%20untuk%20top%20up%20${invoice.invoiceCode}%20sebesar%20${formatCurrency(invoice.amount)}`} target="_blank">
+              Konfirmasi via WhatsApp
+            </Link>
           </Button>
         </div>
       )}
