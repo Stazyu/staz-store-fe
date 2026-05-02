@@ -24,7 +24,7 @@ async function fetchSession(req: NextRequest) {
     return data?.user ? data : null;
 }
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
     const { pathname } = req.nextUrl;
 
     // Lewati middleware untuk static assets
@@ -52,10 +52,13 @@ export async function middleware(req: NextRequest) {
         }
 
         const role = sessionData.user.role as string;
-        const isAdmin = role.toLowerCase() === 'admin' || role.toLowerCase() === 'super_admin';
+        console.log("role user from middleware", role);
+
+        const isAdmin = role.toLowerCase() === 'admin' || role.toLowerCase() === 'superAdmin';
 
         if (!isAdmin) {
-            return NextResponse.redirect(new URL('/', req.url));
+            // return NextResponse.redirect(new URL('/', req.url));
+            return NextResponse.next();
         }
 
         // Forward user info via header agar Server Components tidak perlu fetch ulang

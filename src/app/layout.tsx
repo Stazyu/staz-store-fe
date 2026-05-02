@@ -4,7 +4,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ThemeProvider from "@/components/providers/ThemeProvider";
 import QueryProvider from "@/components/providers/QueryProvider";
-// import AuthSession from "@/components/providers/AuthSession";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,9 +33,7 @@ export default function RootLayout({
       <body className="antialiased bg-gray-50 dark:bg-gray-900">
         <ThemeProvider>
           <QueryProvider>
-            {/* <AuthSession> */}
             {children}
-            {/* </AuthSession> */}
           </QueryProvider>
         </ThemeProvider>
       </body>
