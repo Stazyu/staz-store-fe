@@ -23,14 +23,6 @@ const nextConfig: NextConfig = {
       }
     ],
   },
-  async rewrites() {
-    return [
-      {
-        source: "/api/auth/:path*",
-        destination: `${process.env.BACKEND_URL}/api/auth/:path*`,
-      },
-    ];
-  },
   reactStrictMode: true,
 };
 

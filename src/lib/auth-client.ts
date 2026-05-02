@@ -4,7 +4,7 @@ import { createAuthClient } from 'better-auth/react'
 import { inferAdditionalFields, jwtClient, adminClient } from "better-auth/client/plugins";
 
 const authClient = createAuthClient({
-    baseURL: process.env.NODE_ENV === 'production' ? '/api/auth' : process.env.NEXT_PUBLIC_API_URL,
+    baseURL: process.env.NEXT_PUBLIC_API_URL,
     plugins: [
         adminClient(),
         jwtClient(),

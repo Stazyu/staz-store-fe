@@ -9,7 +9,7 @@
  */
 
 import { cache } from "react";
-import { headers } from "next/headers";
+import { cookies } from "next/headers";
 
 export type SessionUser = {
     id: string;
@@ -37,23 +37,17 @@ export type SessionData = {
  * - Safe dipanggil dari multiple Server Components (layout + page, dll).
  */
 export const getSession = cache(async (): Promise<SessionData> => {
-    // 1. Dapatkan semua headers dari request Next.js (termasuk cookie, origin, user-agent, dll)
-    const headersList = await headers();
-    
-    // Convert ReadonlyHeaders ke Headers object standar yang bisa dipakai fetch
-    const fetchHeaders = new Headers();
-    headersList.forEach((value, key) => {
-        // Pengecualian host header (biarkan fetch mengatur host target backend)
-        if (key.toLowerCase() !== 'host') {
-            fetchHeaders.append(key, value);
-        }
-    });
+    const cookieStore = await cookies();
+    const cookie = cookieStore
+        .getAll()
+        .map((c) => `${c.name}=${c.value}`)
+        .join("; ");
 
     try {
         const res = await fetch(
             `${process.env.BACKEND_URL}/api/auth/get-session`,
             {
-                headers: fetchHeaders,
+                headers: { cookie },
                 cache: "no-store",
             }
         );
