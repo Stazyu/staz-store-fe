@@ -87,7 +87,7 @@ export default function RegisterPage() {
 
     // If it doesn't have any country code, add +62
     if (!digits.startsWith('+')) {
-      return `+62${digits}`;
+      return `+${digits}`;
     }
 
     // Otherwise return as is
