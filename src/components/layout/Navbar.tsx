@@ -36,7 +36,7 @@ export default function Navbar() {
   const handleLogout = async () => {
     try {
       await authClient.signOut();
-      await queryClient.invalidateQueries({ queryKey: ['auth-session'] });
+      queryClient.clear();
       router.refresh();
     } catch (error) {
       console.error('Logout error', error);
