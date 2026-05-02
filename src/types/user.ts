@@ -18,6 +18,7 @@ export interface User {
     banned: boolean;
     banReason?: string | null;
     banExpires?: string | null;
+    pricingTierId?: string;
 }
 
 export interface UpdateUserDto {
@@ -33,7 +34,9 @@ export interface UpdateUserDto {
     phoneNumber?: string;
     sellOffline?: boolean;
     emailVerified?: boolean;
+    pricingTierId?: string;
 }
+
 
 export interface ApiResponse<T> {
     message?: string;

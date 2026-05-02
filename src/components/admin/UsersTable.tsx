@@ -14,6 +14,7 @@ import { toast } from "react-hot-toast";
 
 import { User, UpdateUserDto, Role } from "@/types/user";
 import { fetchUsers, updateUser } from "@/services/user.client";
+import { fetchPricingTiers } from "@/services/pricingTier.client";
 
 import authClient from "@/lib/auth-client";
 
@@ -46,6 +47,7 @@ export default function UsersTable() {
         phoneNumber: '',
         sellOffline: false,
         emailVerified: false,
+        pricingTierId: 'BRONZE',
     });
 
     // State for ban modal
@@ -56,6 +58,12 @@ export default function UsersTable() {
     const { data: users = [], isLoading, error, refetch } = useQuery({
         queryKey: ['admin-users'],
         queryFn: fetchUsers,
+    });
+
+    // Fetch pricing tiers
+    const { data: pricingTiers = [] } = useQuery({
+        queryKey: ['admin-pricing-tiers'],
+        queryFn: fetchPricingTiers,
     });
 
     // Update user mutation
@@ -136,6 +144,7 @@ export default function UsersTable() {
             telegramId: user.telegramId || '',
             role: user.role,
             balance: user.balance,
+            pricingTierId: user.pricingTierId || 'BRONZE',
             ...(isAdmin && {
                 phoneNumber: user.phoneNumber,
                 sellOffline: user.sellOffline,
@@ -392,6 +401,7 @@ export default function UsersTable() {
                             >
                                 Role {renderSortIcon('role')}
                             </TableHead>
+                            <TableHead>Pricing Tier</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead className="text-center">Aksi</TableHead>
                         </TableRow>
@@ -399,7 +409,7 @@ export default function UsersTable() {
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                                     Loading...
                                 </TableCell>
                             </TableRow>
@@ -418,6 +428,11 @@ export default function UsersTable() {
                                                     'bg-gray-700 text-gray-100'
                                             }`}>
                                             {user.role.charAt(0) + user.role.slice(1).toLowerCase()}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell>
+                                        <span className="px-2 py-1 rounded-full bg-indigo-700 text-gray-100 text-xs font-medium">
+                                            {user.pricingTierId || 'BRONZE'}
                                         </span>
                                     </TableCell>
                                     <TableCell>
@@ -474,7 +489,7 @@ export default function UsersTable() {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                                     Tidak ada data user yang ditemukan
                                 </TableCell>
                             </TableRow>
@@ -599,6 +614,19 @@ export default function UsersTable() {
                                                                 'bg-gray-100 text-gray-800 dark:bg-gray-800/30 dark:text-gray-200'
                                                         }`}>
                                                         {detailUser.role.charAt(0) + detailUser.role.slice(1).toLowerCase()}
+                                                    </span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-start">
+                                            <div className="h-5 w-5 mr-3 mt-0.5 shrink-0 flex items-center justify-center">
+                                                <span className={`h-2.5 w-2.5 rounded-full bg-indigo-500`} />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Pricing Tier</p>
+                                                <p className="text-gray-900 dark:text-white">
+                                                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-200`}>
+                                                        {detailUser.pricingTierId || 'BRONZE'}
                                                     </span>
                                                 </p>
                                             </div>
@@ -781,6 +809,33 @@ export default function UsersTable() {
                                 onChange={(e) => setEditForm({ ...editForm, balance: Number(e.target.value) })}
                                 required
                             />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="edit-pricingTierId">Pricing Tier</Label>
+                            <Select
+                                value={editForm.pricingTierId || "BRONZE"}
+                                onValueChange={(value) => setEditForm({ ...editForm, pricingTierId: value })}
+                            >
+                                <SelectTrigger id="edit-pricingTierId">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {pricingTiers && pricingTiers.length > 0 ? (
+                                        pricingTiers.map((tier: any) => (
+                                            <SelectItem key={tier.id} value={tier.code || tier.id}>
+                                                {tier.name}
+                                            </SelectItem>
+                                        ))
+                                    ) : (
+                                        <>
+                                            <SelectItem value="BRONZE">Bronze</SelectItem>
+                                            <SelectItem value="SILVER">Silver</SelectItem>
+                                            <SelectItem value="GOLD">Gold</SelectItem>
+                                            <SelectItem value="PLATINUM">Platinum</SelectItem>
+                                        </>
+                                    )}
+                                </SelectContent>
+                            </Select>
                         </div>
 
                         {session?.user?.role?.toLowerCase() === 'super_admin' && (
