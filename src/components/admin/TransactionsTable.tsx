@@ -83,7 +83,7 @@ export default function TransactionsTable({ defaultType, defaultCategory }: Tran
             Gagal mengambil data transaksi: {(error as Error).message}
           </div>
         )}
-        
+
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -162,7 +162,7 @@ export default function TransactionsTable({ defaultType, defaultCategory }: Tran
               </div>
             </div>
           </div>
-          
+
           {detailTrx && (
             <div className="p-6 space-y-6">
               <div className="flex justify-between items-center">
@@ -197,20 +197,20 @@ export default function TransactionsTable({ defaultType, defaultCategory }: Tran
                     <p className="font-medium text-sm">{detailTrx.type}</p>
                   </div>
                 </div>
-                
+
                 {detailTrx.metadata?.dataNo && (
                   <>
                     <div className="border-t border-gray-100 my-2"></div>
                     <div>
                       <p className="text-xs text-gray-500">Tujuan (No/ID/Zone)</p>
                       <p className="font-medium text-sm">
-                        {detailTrx.metadata.dataNo} 
+                        {detailTrx.metadata.dataNo}
                         {detailTrx.metadata.dataId ? ` (${detailTrx.metadata.dataId})` : ""}
                       </p>
                     </div>
                   </>
                 )}
-                
+
                 {detailTrx.metadata?.sn && (
                   <div>
                     <p className="text-xs text-gray-500">Serial Number / VSN</p>

@@ -83,9 +83,30 @@ function ProductTableInner() {
 
     // -------- Cascading Filter Logic --------
     const filteredBrands = React.useMemo(() => {
-        if (!params.categoryId || params.categoryId === "__all__") return brands;
-        return brands.filter(b => b.categoryId === params.categoryId || (typeof b.category === 'object' && b.category?.id === Number(params.categoryId)));
+        let list = brands;
+        if (params.categoryId && params.categoryId !== "__all__") {
+            list = brands.filter(b => b.categoryId === params.categoryId || (typeof b.category === 'object' && b.category?.id === Number(params.categoryId)));
+        }
+        const seen = new Set();
+        return list.filter(b => {
+            if (!b || !b.name) return false;
+            const key = b.name.toLowerCase().trim();
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
     }, [brands, params.categoryId]);
+
+    const filteredCategories = React.useMemo(() => {
+        const seen = new Set();
+        return categories.filter(c => {
+            if (!c || !c.id) return false;
+            const key = `${c.id}-${c.name}`.toLowerCase().trim();
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
+    }, [categories]);
 
     const filteredTypes = React.useMemo(() => {
         let sourceBrands = brands;
@@ -548,7 +569,7 @@ function ProductTableInner() {
                                     <SelectItem value="__all__" className="rounded-lg">
                                         <span className="font-medium">Semua Kategori</span>
                                     </SelectItem>
-                                    {categories.map((cat) => (
+                                    {filteredCategories.map((cat) => (
                                         <SelectItem key={cat.id} value={cat.id} className="rounded-lg">
                                             {cat.name}
                                         </SelectItem>

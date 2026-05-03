@@ -50,7 +50,7 @@ export default function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden md:flex flex-col w-72 h-screen bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-r border-gray-200/50 dark:border-gray-800/50 shadow-xl shadow-gray-200/20 dark:shadow-gray-900/30">
+    <aside className="hidden md:flex flex-col w-72 h-screen sticky top-0 bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-r border-gray-200/50 dark:border-gray-800/50 shadow-xl shadow-gray-200/20 dark:shadow-gray-900/30">
       {/* Logo Section with Blue Gradient */}
       <div className="relative flex items-center h-20 px-6 border-b border-gray-100 dark:border-gray-800/50 overflow-hidden">
         <div className="absolute inset-0 bg-linear-to-r from-blue-600/5 via-sky-500/5 to-cyan-500/5"></div>
