@@ -1,12 +1,16 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, AreaChart, Area, Legend
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  BarChart, Bar, Cell, AreaChart, Area, Legend,
 } from "recharts";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FiDownload, FiRefreshCw, FiTrendingUp, FiShoppingCart, FiUsers, FiActivity, FiCheckCircle, FiClock, FiXCircle } from "react-icons/fi";
+import {
+  FiDownload, FiRefreshCw, FiTrendingUp, FiShoppingCart,
+  FiActivity, FiCheckCircle, FiClock, FiXCircle, FiZap,
+  FiGrid, FiPackage, FiLoader,
+} from "react-icons/fi";
 import { DashboardSummary, calculateTodaysSummary } from "./DashboardSummary";
 import { fetchRecentTransactions } from "@/services/transaction.client";
 import { useQuery } from "@tanstack/react-query";
@@ -14,28 +18,16 @@ import { formatDistanceToNow } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { useTheme } from "next-themes";
 
-// Dummy data for today's transactions
+/* ─── Mock Data ─────────────────────────────────────────────────────────── */
 const mockTransactions = [
-  { id: '1', date: new Date().toISOString(), status: 'success' as const, total: 150000 },
-  { id: '2', date: new Date().toISOString(), status: 'success' as const, total: 250000 },
-  { id: '3', date: new Date().toISOString(), status: 'success' as const, total: 100000 },
-  { id: '4', date: new Date().toISOString(), status: 'pending' as const, total: 75000 },
-  { id: '5', date: new Date(Date.now() - 86400000).toISOString(), status: 'success' as const, total: 300000 }, // Yesterday's transaction
+  { id: "1", date: new Date().toISOString(), status: "success" as const, total: 150000 },
+  { id: "2", date: new Date().toISOString(), status: "success" as const, total: 250000 },
+  { id: "3", date: new Date().toISOString(), status: "success" as const, total: 100000 },
+  { id: "4", date: new Date().toISOString(), status: "pending" as const, total: 75000 },
+  { id: "5", date: new Date(Date.now() - 86400000).toISOString(), status: "success" as const, total: 300000 },
 ];
-
-// Recent activities
-const recentActivities = [
-  { id: 1, user: 'John Doe', action: 'Membeli Diamond Mobile Legends', amount: 150000, time: '2 menit lalu', status: 'success' },
-  { id: 2, user: 'Jane Smith', action: 'Top Up Pulsa Telkomsel', amount: 50000, time: '5 menit lalu', status: 'success' },
-  { id: 3, user: 'Mike Johnson', action: 'Top Up OVO', amount: 100000, time: '10 menit lalu', status: 'pending' },
-  { id: 4, user: 'Sarah Williams', action: 'Membeli UC PUBG Mobile', amount: 200000, time: '15 menit lalu', status: 'success' },
-  { id: 5, user: 'David Brown', action: 'Top Up GoPay', amount: 75000, time: '20 menit lalu', status: 'failed' },
-];
-
-// Calculate today's summary
 const todaysSummary = calculateTodaysSummary(mockTransactions);
 
-// Chart data for daily revenue
 const dailyRevenue = [
   { date: "2025-06-07", revenue: 1200000, transactions: 45 },
   { date: "2025-06-08", revenue: 1500000, transactions: 52 },
@@ -46,378 +38,379 @@ const dailyRevenue = [
   { date: "2025-06-13", revenue: 2100000, transactions: 72 },
 ];
 
-// Transaction status breakdown
 const statusBreakdown = [
-  { name: 'Berhasil', value: 120, color: '#22c55e' },
-  { name: 'Pending', value: 30, color: '#fbbf24' },
-  { name: 'Gagal', value: 10, color: '#ef4444' },
+  { name: "Berhasil", value: 120, color: "#22d3ee" },
+  { name: "Pending", value: 30, color: "#a78bfa" },
+  { name: "Gagal", value: 10, color: "#f87171" },
 ];
 
-// Category transactions with more detailed data
 const categoryTransactions = [
   {
-    category: "Game",
-    count: 180,
-    revenue: 45000000,
-    color: '#3b82f6',
-    subcategories: [
-      { name: 'Mobile Legends', count: 80 },
-      { name: 'Free Fire', count: 60 },
-      { name: 'PUBG Mobile', count: 40 }
-    ]
+    category: "Game", count: 180, revenue: 45000000, color: "#38bdf8",
+    subcategories: [{ name: "Mobile Legends", count: 80 }, { name: "Free Fire", count: 60 }, { name: "PUBG Mobile", count: 40 }],
   },
   {
-    category: "Pulsa",
-    count: 90,
-    revenue: 22500000,
-    color: '#10b981',
-    subcategories: [
-      { name: 'Telkomsel', count: 50 },
-      { name: 'XL', count: 25 },
-      { name: 'Indosat', count: 15 }
-    ]
+    category: "Pulsa", count: 90, revenue: 22500000, color: "#34d399",
+    subcategories: [{ name: "Telkomsel", count: 50 }, { name: "XL", count: 25 }, { name: "Indosat", count: 15 }],
   },
   {
-    category: "E-Money",
-    count: 60,
-    revenue: 15000000,
-    color: '#8b5cf6',
-    subcategories: [
-      { name: 'OVO', count: 35 },
-      { name: 'GoPay', count: 15 },
-      { name: 'DANA', count: 10 }
-    ]
+    category: "E-Money", count: 60, revenue: 15000000, color: "#c084fc",
+    subcategories: [{ name: "OVO", count: 35 }, { name: "GoPay", count: 15 }, { name: "DANA", count: 10 }],
   },
 ];
+const totalTransactions = categoryTransactions.reduce((s, c) => s + c.count, 0);
 
-// Calculate total transactions for percentage calculation
-const totalTransactions = categoryTransactions.reduce((sum, cat) => sum + cat.count, 0);
+/* ─── Custom Tooltip ─────────────────────────────────────────────────────── */
+const CustomAreaTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-gray-900/95 border border-white/10 rounded-xl p-3 shadow-2xl backdrop-blur-sm">
+      <p className="text-xs text-gray-400 mb-2">
+        {new Date(label).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long" })}
+      </p>
+      {payload.map((p: any) => (
+        <div key={p.name} className="flex items-center gap-2 text-sm">
+          <div className="w-2 h-2 rounded-full" style={{ background: p.color }} />
+          <span className="text-gray-300">
+            {p.name === "revenue"
+              ? `Rp ${Number(p.value).toLocaleString("id-ID")}`
+              : `${p.value} transaksi`}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
 
+const CustomBarTooltip = ({ active, payload }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-gray-900/95 border border-white/10 rounded-xl p-3 shadow-2xl backdrop-blur-sm">
+      <p className="text-sm text-white font-semibold">{payload[0].payload.name}</p>
+      <p className="text-xs text-gray-400">{payload[0].value} transaksi</p>
+    </div>
+  );
+};
+
+/* ─── Section Header ─────────────────────────────────────────────────────── */
+function SectionHeader({ icon: Icon, title, sub, color }: { icon: any; title: string; sub?: string; color: string }) {
+  return (
+    <div className="flex items-center gap-3 mb-1">
+      <div className={`p-2 rounded-lg ${color}`}>
+        <Icon className="w-4 h-4" />
+      </div>
+      <div>
+        <h2 className="text-base font-bold text-gray-900 dark:text-white leading-none">{title}</h2>
+        {sub && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{sub}</p>}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Status Indicator ───────────────────────────────────────────────────── */
+function LiveDot() {
+  return (
+    <span className="relative flex h-2.5 w-2.5">
+      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+    </span>
+  );
+}
+
+/* ─── Main Component ─────────────────────────────────────────────────────── */
 export default function DashboardMain() {
   const { theme } = useTheme();
-  
-  const { data: recentRes, isLoading: isLoadingRecent } = useQuery({
-    queryKey: ['recentTransactions'],
+  const [activeChart, setActiveChart] = useState<"revenue" | "transactions">("revenue");
+  const isDark = theme === "dark";
+
+  const { data: recentRes, isLoading: isLoadingRecent, refetch } = useQuery({
+    queryKey: ["recentTransactions"],
     queryFn: () => fetchRecentTransactions(5),
   });
-  
   const recentTransactions = recentRes?.data || [];
 
+  const gridStroke = isDark ? "#ffffff08" : "#00000008";
+  const axisStroke = isDark ? "#4b5563" : "#9ca3af";
+
   return (
-    <div className="space-y-6">
-      {/* Modern Header with Gradient */}
-      <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-blue-600 via-blue-700 to-indigo-800 p-8 shadow-2xl">
-        <div className="absolute inset-0 bg-grid-white/[0.05] bg-size-[20px_20px]" />
-        <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="space-y-8 pb-8">
+
+      {/* ── Hero Header ── */}
+      <div className="relative overflow-hidden rounded-3xl p-8">
+        {/* Base gradient bg */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-950 via-indigo-950 to-violet-950" />
+        {/* Animated mesh */}
+        {/* <div className="absolute inset-0 opacity-30">
+          <div className="absolute top-0 left-1/4 w-72 h-72 bg-blue-500 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-violet-500 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+          <div className="absolute top-1/2 left-1/2 w-48 h-48 bg-cyan-400 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "2s" }} />
+        </div> */}
+        {/* Grid overlay */}
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: "linear-gradient(rgba(255,255,255,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.07) 1px, transparent 1px)",
+            backgroundSize: "32px 32px",
+          }}
+        />
+
+        <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white flex items-center gap-3">
-              <FiActivity className="h-8 w-8" />
-              Dashboard Analytics
+            <div className="flex items-center gap-3 mb-3">
+              <LiveDot />
+              <span className="text-xs font-semibold text-emerald-400 uppercase tracking-widest">Live Analytics</span>
+            </div>
+            <h1 className="text-4xl md:text-5xl font-black text-white leading-none tracking-tight">
+              Dashboard
+              <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent ml-3">
+                Analytics
+              </span>
             </h1>
-            <p className="text-blue-100 mt-2 text-lg">Pantau performa bisnis Anda secara real-time</p>
+            <p className="text-blue-200/70 mt-3 text-base">
+              Pantau performa bisnis Anda secara real-time
+            </p>
           </div>
+
           <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              className="bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border-white/20 shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-0.5"
+            <button
+              onClick={() => refetch()}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-medium border border-white/10 backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
             >
-              <FiDownload className="mr-2 h-4 w-4" />
-              Export Data
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border-white/20 shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-0.5"
-            >
-              <FiRefreshCw className="mr-2 h-4 w-4" />
+              <FiRefreshCw className="w-4 h-4" />
               Refresh
-            </Button>
+            </button>
+            <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 text-white text-sm font-medium shadow-lg shadow-blue-500/30 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0">
+              <FiDownload className="w-4 h-4" />
+              Export
+            </button>
+          </div>
+        </div>
+
+        {/* Metrics strip */}
+        <div className="relative mt-8 grid grid-cols-3 gap-4 pt-6 border-t border-white/10">
+          {[
+            { label: "Total Produk", value: "1,204", icon: FiPackage, color: "text-cyan-400" },
+            { label: "Pengguna Aktif", value: "3.4K", icon: FiZap, color: "text-violet-400" },
+            { label: "Kategori", value: "12", icon: FiGrid, color: "text-amber-400" },
+          ].map((m) => (
+            <div key={m.label} className="flex items-center gap-3">
+              <m.icon className={`w-5 h-5 ${m.color}`} />
+              <div>
+                <div className="text-white font-bold text-lg leading-none">{m.value}</div>
+                <div className="text-blue-200/50 text-xs mt-0.5">{m.label}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Stat Cards ── */}
+      <DashboardSummary today={todaysSummary.today} yesterday={todaysSummary.yesterday} />
+
+      {/* ── Main Chart + Activity ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+        {/* Revenue / Transaction chart */}
+        <div className="xl:col-span-2 rounded-2xl border border-gray-200/50 dark:border-white/5 bg-white dark:bg-gray-900/60 backdrop-blur-sm shadow-xl overflow-hidden">
+          <div className="p-6 border-b border-gray-100 dark:border-white/5">
+            <div className="flex items-center justify-between">
+              <SectionHeader icon={FiTrendingUp} title="Tren Pendapatan" sub="7 hari terakhir" color="bg-blue-500/15 text-blue-500" />
+              <div className="flex gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                {(["revenue", "transactions"] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveChart(tab)}
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 ${activeChart === tab
+                        ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                        : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                      }`}
+                  >
+                    {tab === "revenue" ? "Pendapatan" : "Transaksi"}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="p-6">
+            <ResponsiveContainer width="100%" height={320}>
+              <AreaChart data={dailyRevenue} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+                <defs>
+                  <linearGradient id="fillRevenue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.4} />
+                    <stop offset="100%" stopColor="#38bdf8" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="fillTrx" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#a78bfa" stopOpacity={0.4} />
+                    <stop offset="100%" stopColor="#a78bfa" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="0" stroke={gridStroke} />
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={(v) => new Date(v).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}
+                  stroke={axisStroke} tick={{ fontSize: 11 }} axisLine={false} tickLine={false}
+                />
+                <YAxis
+                  tickFormatter={(v) => activeChart === "revenue" ? `${(v / 1000000).toFixed(1)}jt` : `${v}`}
+                  stroke={axisStroke} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} width={45}
+                />
+                <Tooltip content={<CustomAreaTooltip />} />
+                {activeChart === "revenue" ? (
+                  <Area type="monotone" dataKey="revenue" stroke="#38bdf8" strokeWidth={2.5} fill="url(#fillRevenue)" dot={false} activeDot={{ r: 5, fill: "#38bdf8", stroke: "#fff", strokeWidth: 2 }} />
+                ) : (
+                  <Area type="monotone" dataKey="transactions" stroke="#a78bfa" strokeWidth={2.5} fill="url(#fillTrx)" dot={false} activeDot={{ r: 5, fill: "#a78bfa", stroke: "#fff", strokeWidth: 2 }} />
+                )}
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="rounded-2xl border border-gray-200/50 dark:border-white/5 bg-white dark:bg-gray-900/60 backdrop-blur-sm shadow-xl flex flex-col">
+          <div className="p-6 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
+            <SectionHeader icon={FiShoppingCart} title="Aktivitas Terkini" color="bg-violet-500/15 text-violet-500" />
+            <LiveDot />
+          </div>
+          <div className="p-4 flex-1 overflow-y-auto space-y-2 max-h-[340px]">
+            {isLoadingRecent ? (
+              <div className="flex flex-col items-center justify-center h-full py-12 gap-3">
+                <FiLoader className="w-8 h-8 text-blue-500 animate-spin" />
+                <p className="text-sm text-gray-400">Memuat aktivitas...</p>
+              </div>
+            ) : recentTransactions.length > 0 ? (
+              recentTransactions.map((trx) => (
+                <div key={trx.id} className="flex items-start gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group">
+                  <div className={`flex-shrink-0 p-2 rounded-lg mt-0.5 ${trx.status === "SUCCESS" ? "bg-emerald-500/15 text-emerald-500" :
+                      trx.status === "PENDING" ? "bg-amber-500/15 text-amber-500" :
+                        "bg-red-500/15 text-red-500"
+                    }`}>
+                    {trx.status === "SUCCESS" && <FiCheckCircle className="w-4 h-4" />}
+                    {trx.status === "PENDING" && <FiClock className="w-4 h-4" />}
+                    {trx.status === "FAILED" && <FiXCircle className="w-4 h-4" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{trx.userName || "Guest"}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{trx.metadata?.productName || trx.description}</p>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-xs font-bold text-cyan-500">Rp {trx.amount.toLocaleString("id-ID")}</span>
+                      <span className="text-xs text-gray-400">{formatDistanceToNow(new Date(trx.createdAt), { addSuffix: true, locale: idLocale })}</span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full py-12 gap-2">
+                <FiActivity className="w-8 h-8 text-gray-300 dark:text-gray-600" />
+                <p className="text-sm text-gray-400">Tidak ada aktivitas</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Today's Sales Summary */}
-      <div className="space-y-4">
-        <DashboardSummary
-          today={todaysSummary.today}
-          yesterday={todaysSummary.yesterday}
-        />
-      </div>
-
-      {/* Main Charts Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Revenue Chart - Takes 2 columns */}
-        <Card className="xl:col-span-2 shadow-lg hover:shadow-xl transition-shadow duration-300">
-          <CardHeader className="border-b border-gray-100 dark:border-gray-800">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-xl flex items-center gap-2">
-                  <FiTrendingUp className="h-5 w-5 text-blue-500" />
-                  Tren Pendapatan & Transaksi
-                </CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">7 hari terakhir</p>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <ResponsiveContainer width="100%" height={350}>
-              <AreaChart
-                data={dailyRevenue}
-                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-              >
-                <defs>
-                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1} />
-                  </linearGradient>
-                  <linearGradient id="colorTransactions" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.1} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#374151' : '#e5e7eb'} vertical={false} />
-                <XAxis
-                  dataKey="date"
-                  tickFormatter={(value) => new Date(value).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                  stroke={theme === 'dark' ? '#9ca3af' : '#6b7280'}
-                />
-                <YAxis
-                  yAxisId="left"
-                  tickFormatter={(value) => `${(value / 1000000).toFixed(1)}jt`}
-                  stroke={theme === 'dark' ? '#9ca3af' : '#6b7280'}
-                />
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
-                  stroke={theme === 'dark' ? '#9ca3af' : '#6b7280'}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: theme === 'dark' ? '#1f2937' : 'white',
-                    border: theme === 'dark' ? '1px solid #374151' : '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                  }}
-                  formatter={(value, name) => {
-                    if (name === 'revenue') return [`Rp ${Number(value).toLocaleString('id-ID')}`, 'Pendapatan'];
-                    return [`${value} transaksi`, 'Jumlah Transaksi'];
-                  }}
-                  labelFormatter={(label) => new Date(label).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
-                />
-                <Legend />
-                <Area
-                  yAxisId="left"
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="#3b82f6"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#colorRevenue)"
-                  name="revenue"
-                />
-                <Area
-                  yAxisId="right"
-                  type="monotone"
-                  dataKey="transactions"
-                  stroke="#10b981"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#colorTransactions)"
-                  name="transactions"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Recent Activity */}
-        <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
-          <CardHeader className="border-b border-gray-100 dark:border-gray-800">
-            <CardTitle className="text-xl flex items-center gap-2">
-              <FiShoppingCart className="h-5 w-5 text-green-500" />
-              Aktivitas Terkini
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2">
-              {isLoadingRecent ? (
-                <div className="text-center py-4 text-gray-500">Memuat aktivitas...</div>
-              ) : recentTransactions.length > 0 ? (
-                recentTransactions.map((trx) => (
-                  <div key={trx.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                    <div className={`mt-1 rounded-full p-2 ${
-                        trx.status === 'SUCCESS' ? 'bg-green-100 dark:bg-green-900/30' :
-                        trx.status === 'PENDING' ? 'bg-yellow-100 dark:bg-yellow-900/30' :
-                        'bg-red-100 dark:bg-red-900/30'
-                      }`}>
-                      {trx.status === 'SUCCESS' && <FiCheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />}
-                      {trx.status === 'PENDING' && <FiClock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />}
-                      {trx.status === 'FAILED' && <FiXCircle className="h-4 w-4 text-red-600 dark:text-red-400" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{trx.userName || "Guest"}</p>
-                      <p className="text-xs text-muted-foreground truncate">{trx.metadata?.productName || trx.description}</p>
-                      <div className="flex items-center justify-between mt-1">
-                        <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">
-                          Rp {trx.amount.toLocaleString('id-ID')}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(trx.createdAt), { addSuffix: true, locale: idLocale })}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-4 text-gray-500">Tidak ada aktivitas.</div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Category & Status Grid */}
+      {/* ── Category + Status ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
         {/* Category Distribution */}
-        <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
-          <CardHeader className="border-b border-gray-100 dark:border-gray-800">
-            <CardTitle className="text-xl flex items-center gap-2">
-              <FiUsers className="h-5 w-5 text-purple-500" />
-              Distribusi Kategori
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">Total {totalTransactions} transaksi</p>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="space-y-6">
-              {categoryTransactions.map((category) => (
-                <div key={category.category} className="space-y-3">
+        <div className="rounded-2xl border border-gray-200/50 dark:border-white/5 bg-white dark:bg-gray-900/60 backdrop-blur-sm shadow-xl overflow-hidden">
+          <div className="p-6 border-b border-gray-100 dark:border-white/5">
+            <SectionHeader icon={FiGrid} title="Distribusi Kategori" sub={`Total ${totalTransactions} transaksi`} color="bg-emerald-500/15 text-emerald-500" />
+          </div>
+          <div className="p-6 space-y-7">
+            {categoryTransactions.map((cat) => {
+              const pct = (cat.count / totalTransactions) * 100;
+              return (
+                <div key={cat.category} className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div
-                        className="w-3 h-3 rounded-full shadow-lg"
-                        style={{ backgroundColor: category.color }}
-                      />
+                      <div className="w-3 h-3 rounded-full shadow-lg" style={{ backgroundColor: cat.color, boxShadow: `0 0 8px ${cat.color}80` }} />
                       <div>
-                        <span className="font-semibold text-base">{category.category}</span>
-                        <p className="text-xs text-muted-foreground">
-                          Rp {category.revenue.toLocaleString('id-ID')}
-                        </p>
+                        <span className="font-bold text-sm text-gray-900 dark:text-white">{cat.category}</span>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Rp {cat.revenue.toLocaleString("id-ID")}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold text-lg">{category.count}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {((category.count / totalTransactions) * 100).toFixed(1)}%
-                      </div>
+                      <div className="font-black text-lg text-gray-900 dark:text-white leading-none">{cat.count}</div>
+                      <div className="text-xs text-gray-400">{pct.toFixed(1)}%</div>
                     </div>
                   </div>
 
-                  {/* Modern Progress Bar */}
-                  <div className="relative w-full h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                  {/* Glow progress bar */}
+                  <div className="relative h-2 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
                     <div
-                      className="absolute inset-y-0 left-0 rounded-full transition-all duration-500 shadow-sm"
-                      style={{
-                        width: `${(category.count / totalTransactions * 100)}%`,
-                        backgroundColor: category.color
-                      }}
+                      className="absolute inset-y-0 left-0 rounded-full transition-all duration-700"
+                      style={{ width: `${pct}%`, backgroundColor: cat.color, boxShadow: `0 0 10px ${cat.color}60` }}
                     />
                   </div>
 
                   {/* Subcategories */}
                   <div className="grid grid-cols-3 gap-2 pl-6">
-                    {category.subcategories.map((sub, idx) => (
-                      <div key={idx} className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2">
-                        <p className="text-xs text-muted-foreground truncate">{sub.name}</p>
-                        <p className="text-sm font-semibold">{sub.count}</p>
+                    {cat.subcategories.map((sub) => (
+                      <div key={sub.name} className="rounded-lg p-2 border border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-white/3 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
+                        <p className="text-xs text-gray-400 truncate">{sub.name}</p>
+                        <p className="text-sm font-bold text-gray-800 dark:text-white">{sub.count}</p>
                       </div>
                     ))}
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              );
+            })}
+          </div>
+        </div>
 
-        {/* Transaction Status */}
-        <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
-          <CardHeader className="border-b border-gray-100 dark:border-gray-800">
-            <CardTitle className="text-xl flex items-center gap-2">
-              <FiActivity className="h-5 w-5 text-orange-500" />
-              Status Transaksi
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">Ringkasan status pemrosesan</p>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart
-                data={statusBreakdown}
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-              >
+        {/* Transaction Status Bar Chart */}
+        <div className="rounded-2xl border border-gray-200/50 dark:border-white/5 bg-white dark:bg-gray-900/60 backdrop-blur-sm shadow-xl overflow-hidden">
+          <div className="p-6 border-b border-gray-100 dark:border-white/5">
+            <SectionHeader icon={FiActivity} title="Status Transaksi" sub="Ringkasan pemrosesan" color="bg-orange-500/15 text-orange-500" />
+          </div>
+          <div className="p-6">
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart data={statusBreakdown} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
                 <defs>
-                  <linearGradient id="successGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#22c55e" stopOpacity={0.8} />
-                    <stop offset="100%" stopColor="#16a34a" stopOpacity={1} />
-                  </linearGradient>
-                  <linearGradient id="pendingGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#fbbf24" stopOpacity={0.8} />
-                    <stop offset="100%" stopColor="#f59e0b" stopOpacity={1} />
-                  </linearGradient>
-                  <linearGradient id="failedGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#ef4444" stopOpacity={0.8} />
-                    <stop offset="100%" stopColor="#dc2626" stopOpacity={1} />
-                  </linearGradient>
+                  {statusBreakdown.map((s) => (
+                    <linearGradient key={s.name} id={`grad-${s.name}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={s.color} stopOpacity={1} />
+                      <stop offset="100%" stopColor={s.color} stopOpacity={0.4} />
+                    </linearGradient>
+                  ))}
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#374151' : '#e5e7eb'} vertical={false} />
-                <XAxis
-                  dataKey="name"
-                  stroke={theme === 'dark' ? '#9ca3af' : '#6b7280'}
-                />
-                <YAxis stroke={theme === 'dark' ? '#9ca3af' : '#6b7280'} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: theme === 'dark' ? '#1f2937' : 'white',
-                    border: theme === 'dark' ? '1px solid #374151' : '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                  }}
-                  formatter={(value) => [`${value} transaksi`, 'Jumlah']}
-                />
-                <Bar dataKey="value" radius={[8, 8, 0, 0]}>
-                  {statusBreakdown.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={
-                        entry.name === 'Berhasil' ? 'url(#successGradient)' :
-                          entry.name === 'Pending' ? 'url(#pendingGradient)' :
-                            'url(#failedGradient)'
-                      }
-                    />
+                <CartesianGrid strokeDasharray="0" stroke={gridStroke} vertical={false} />
+                <XAxis dataKey="name" stroke={axisStroke} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+                <YAxis stroke={axisStroke} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                <Tooltip content={<CustomBarTooltip />} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
+                <Bar dataKey="value" radius={[8, 8, 0, 0]} maxBarSize={64}>
+                  {statusBreakdown.map((entry) => (
+                    <Cell key={entry.name} fill={`url(#grad-${entry.name})`} />
                   ))}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
 
-            {/* Status Summary Cards */}
-            <div className="grid grid-cols-3 gap-3 mt-6">
-              {statusBreakdown.map((status) => (
+            {/* Status summary tiles */}
+            <div className="grid grid-cols-3 gap-3 mt-4">
+              {statusBreakdown.map((s) => (
                 <div
-                  key={status.name}
-                  className="p-3 rounded-lg border-2 transition-all hover:scale-105"
-                  style={{ borderColor: status.color }}
+                  key={s.name}
+                  className="p-4 rounded-xl border transition-all hover:scale-[1.03] cursor-default"
+                  style={{ borderColor: `${s.color}30`, background: `${s.color}10` }}
                 >
-                  <div className="text-2xl font-bold" style={{ color: status.color }}>
-                    {status.value}
+                  <div className="text-2xl font-black leading-none" style={{ color: s.color }}>{s.value}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{s.name}</div>
+                  <div className="text-xs font-semibold mt-1" style={{ color: s.color }}>
+                    {((s.value / statusBreakdown.reduce((a, b) => a + b.value, 0)) * 100).toFixed(0)}%
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">{status.name}</div>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Footer note ── */}
+      <div className="flex items-center justify-center gap-2 text-xs text-gray-400 dark:text-gray-600">
+        <LiveDot />
+        <span>Data diperbarui otomatis setiap 30 detik</span>
       </div>
     </div>
   );
-};
-
-
+}
