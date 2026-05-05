@@ -11,9 +11,24 @@ interface SummaryData {
 }
 
 interface DashboardSummaryProps {
-    today: SummaryData;
-    yesterday: SummaryData;
+    today?: SummaryData;
+    yesterday?: SummaryData;
+    summary?: {
+        totalRevenueToday: number;
+        totalTransactionsToday: number;
+        averageTransactionToday: number;
+        successRateToday: number;
+        revenueGrowthPercent: number;
+        transactionGrowthPercent: number;
+        averageTransactionGrowthPercent: number;
+        successRateGrowthPercent: number;
+        totalRevenueYesterday?: number;
+        totalTransactionsYesterday?: number;
+        averageTransactionYesterday?: number;
+        successRateYesterday?: number;
+    }
 }
+
 
 const calculateChange = (current: number, previous: number): { value: number; isIncrease: boolean } => {
     if (previous === 0) return { value: 100, isIncrease: current > 0 };
@@ -162,12 +177,43 @@ function StatCard({
     );
 }
 
-export function DashboardSummary({ today, yesterday }: DashboardSummaryProps) {
-    const cards = [
-        { key: "revenue", value: today.totalRevenue, prev: yesterday.totalRevenue, change: calculateChange(today.totalRevenue, yesterday.totalRevenue) },
-        { key: "transactions", value: today.totalTransactions, prev: yesterday.totalTransactions, change: calculateChange(today.totalTransactions, yesterday.totalTransactions) },
-        { key: "avg", value: today.avgTransaction, prev: yesterday.avgTransaction, change: calculateChange(today.avgTransaction, yesterday.avgTransaction) },
-        { key: "rate", value: today.successRate, prev: yesterday.successRate, change: calculateChange(today.successRate, yesterday.successRate) },
+const safePrevValue = (val: number, change: number) => {
+    if (!isFinite(change) || isNaN(change) || change === -100) return 0;
+    const calc = val / (1 + change / 100);
+    return isFinite(calc) && !isNaN(calc) ? Math.round(calc) : 0;
+};
+
+export function DashboardSummary({ today, yesterday, summary }: DashboardSummaryProps) {
+    const cards = summary ? [
+        {
+            key: "revenue",
+            value: summary.totalRevenueToday ?? 0,
+            prev: summary.totalRevenueYesterday ?? 0,
+            change: { value: summary.revenueGrowthPercent ?? 0, isIncrease: (summary.revenueGrowthPercent ?? 0) >= 0 }
+        },
+        {
+            key: "transactions",
+            value: summary.totalTransactionsToday ?? 0,
+            prev: summary.totalTransactionsYesterday ?? 0,
+            change: { value: summary.transactionGrowthPercent ?? 0, isIncrease: (summary.transactionGrowthPercent ?? 0) >= 0 }
+        },
+        {
+            key: "avg",
+            value: summary.averageTransactionToday ?? 0,
+            prev: summary.averageTransactionYesterday ?? 0,
+            change: { value: summary.averageTransactionGrowthPercent ?? 0, isIncrease: (summary.averageTransactionGrowthPercent ?? 0) >= 0 }
+        },
+        {
+            key: "rate",
+            value: summary.successRateToday ?? 0,
+            prev: summary.successRateYesterday ?? 0,
+            change: { value: summary.successRateGrowthPercent ?? 0, isIncrease: (summary.successRateGrowthPercent ?? 0) >= 0 }
+        },
+    ] : [
+        { key: "revenue", value: today?.totalRevenue ?? 0, prev: yesterday?.totalRevenue ?? 0, change: calculateChange(today?.totalRevenue ?? 0, yesterday?.totalRevenue ?? 0) },
+        { key: "transactions", value: today?.totalTransactions ?? 0, prev: yesterday?.totalTransactions ?? 0, change: calculateChange(today?.totalTransactions ?? 0, yesterday?.totalTransactions ?? 0) },
+        { key: "avg", value: today?.avgTransaction ?? 0, prev: yesterday?.avgTransaction ?? 0, change: calculateChange(today?.avgTransaction ?? 0, yesterday?.avgTransaction ?? 0) },
+        { key: "rate", value: today?.successRate ?? 0, prev: yesterday?.successRate ?? 0, change: calculateChange(today?.successRate ?? 0, yesterday?.successRate ?? 0) },
     ];
 
     return (

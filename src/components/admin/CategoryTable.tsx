@@ -153,7 +153,7 @@ export default function CategoryTable() {
             <Card>
                 <CardHeader><CardTitle>Grafik Produk per Kategori</CardTitle></CardHeader>
                 <CardContent>
-                    <ResponsiveContainer width="100%" height={180}>
+                    <ResponsiveContainer width="100%" height={180} minWidth={0}>
                         <BarChart data={chartData}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="name" />
