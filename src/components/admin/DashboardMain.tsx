@@ -16,6 +16,13 @@ import { useAdminDashboardQuery } from "@/hooks/useAdminDashboardQuery";
 import { formatDistanceToNow } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { useTheme } from "next-themes";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 /* ─── Helpers ───────────────────────────────────────────────────────────── */
 const formatCurrency = (val: number) =>
@@ -131,9 +138,18 @@ function DashboardError({ message, onRetry }: { message: string; onRetry: () => 
 export default function DashboardMain() {
   const { theme } = useTheme();
   const [activeChart, setActiveChart] = useState<"revenue" | "transactions">("revenue");
+  const [period, setPeriod] = useState<string>("month");
   const isDark = theme === "dark";
 
-  const { data: dashboardData, isLoading, isError, error, refetch, isFetching } = useAdminDashboardQuery();
+  const { 
+    data: dashboardData, 
+    isLoading, 
+    isError, 
+    error, 
+    refetch, 
+    isFetching,
+    isPlaceholderData 
+  } = useAdminDashboardQuery(period);
 
   const gridStroke = isDark ? "#ffffff08" : "#00000008";
   const axisStroke = isDark ? "#4b5563" : "#9ca3af";
@@ -146,10 +162,12 @@ export default function DashboardMain() {
     totalTransactionsToday: 0,
     averageTransactionToday: 0,
     successRateToday: 0,
+    totalProfitToday: 0,
     revenueGrowthPercent: 0,
     transactionGrowthPercent: 0,
     averageTransactionGrowthPercent: 0,
     successRateGrowthPercent: 0,
+    profitGrowthPercent: 0,
     totalProducts: 0,
     activeUsers: 0,
     totalCategories: 0,
@@ -160,7 +178,9 @@ export default function DashboardMain() {
   const categoryDistribution = dashboardData?.categoryDistribution || [];
   const transactionStatus = dashboardData?.transactionStatus || [];
 
-  const totalCategoryTransactions = categoryDistribution.reduce((s, c) => s + (c.count || 0), 0);
+  const totalCategoryTransactions = categoryDistribution.reduce((s, c) => s + (c.totalTransactions || 0), 0);
+  const totalStatusTransactions = transactionStatus.reduce((s, c) => s + (c.value || 0), 0);
+  const hasStatusData = totalStatusTransactions > 0;
 
   const handleExport = () => {
     if (!dashboardData) return;
@@ -367,24 +387,49 @@ export default function DashboardMain() {
 
         {/* Category Distribution */}
         <div className="rounded-2xl border border-gray-200/50 dark:border-white/5 bg-white dark:bg-gray-900/60 backdrop-blur-sm shadow-xl overflow-hidden">
-          <div className="p-6 border-b border-gray-100 dark:border-white/5">
-            <SectionHeader icon={FiGrid} title="Distribusi Kategori" sub={`Total ${totalCategoryTransactions} transaksi`} color="bg-emerald-500/15 text-emerald-500" />
+          <div className="p-6 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
+            <SectionHeader 
+              icon={FiGrid} 
+              title="Distribusi Kategori" 
+              sub={`Total ${totalCategoryTransactions.toLocaleString("id-ID")} transaksi - ${period === 'day' ? 'Hari Ini' : period === 'week' ? '7 Hari Terakhir' : '30 Hari Terakhir'}`} 
+              color="bg-emerald-500/15 text-emerald-500" 
+            />
+            <Select value={period} onValueChange={setPeriod}>
+              <SelectTrigger className="w-[130px] h-9 bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-white/10">
+                <SelectValue placeholder="Pilih Periode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="day">Hari Ini</SelectItem>
+                <SelectItem value="week">Minggu Ini</SelectItem>
+                <SelectItem value="month">Bulan Ini</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <div className="p-6 space-y-7">
+          <div className="p-6 space-y-7 relative">
+            {/* Localized Loading Overlay */}
+            {isPlaceholderData && (
+              <div className="absolute inset-0 z-10 bg-white/50 dark:bg-gray-900/50 backdrop-blur-[1px] flex items-center justify-center transition-all duration-300">
+                <div className="flex flex-col items-center gap-2">
+                  <FiLoader className="w-8 h-8 text-emerald-500 animate-spin" />
+                  <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">Memperbarui...</p>
+                </div>
+              </div>
+            )}
+
             {categoryDistribution.length > 0 ? (
               categoryDistribution.map((cat, idx) => {
                 const defaultColors = ["#38bdf8", "#34d399", "#c084fc", "#fb923c", "#f472b6", "#a78bfa"];
-                const color = cat.color || defaultColors[idx % defaultColors.length];
-                const count = cat.count || 0;
-                const pct = totalCategoryTransactions > 0 ? (count / totalCategoryTransactions) * 100 : 0;
+                const color = defaultColors[idx % defaultColors.length];
+                const count = cat.totalTransactions || 0;
+                const pct = cat.percentage ?? 0;
                 return (
-                  <div key={cat.category || idx} className="space-y-3">
+                  <div key={cat.categoryName || idx} className="space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-3 h-3 rounded-full shadow-lg" style={{ backgroundColor: color, boxShadow: `0 0 8px ${color}80` }} />
                         <div>
-                          <span className="font-bold text-sm text-gray-900 dark:text-white">{cat.category}</span>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{formatCurrency(cat.revenue || 0)}</p>
+                          <span className="font-bold text-sm text-gray-900 dark:text-white">{cat.categoryName}</span>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{formatCurrency(cat.totalRevenue || 0)}</p>
                         </div>
                       </div>
                       <div className="text-right">
@@ -396,16 +441,16 @@ export default function DashboardMain() {
                     <div className="relative h-2 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
                       <div
                         className="absolute inset-y-0 left-0 rounded-full transition-all duration-700"
-                        style={{ width: `${pct}%`, backgroundColor: color, boxShadow: `0 0 10px ${color}60` }}
+                        style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: color, boxShadow: `0 0 10px ${color}60` }}
                       />
                     </div>
 
-                    {cat.subcategories && cat.subcategories.length > 0 && (
+                    {cat.brands && cat.brands.length > 0 && (
                       <div className="grid grid-cols-3 gap-2 pl-6">
-                        {cat.subcategories.map((sub: any, sIdx: number) => (
-                          <div key={sub.name || sIdx} className="rounded-lg p-2 border border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-white/3 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
-                            <p className="text-xs text-gray-400 truncate">{sub.name}</p>
-                            <p className="text-sm font-bold text-gray-800 dark:text-white">{sub.count || 0}</p>
+                        {cat.brands.map((brand, bIdx) => (
+                          <div key={brand.name || bIdx} className="rounded-lg p-2 border border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-white/3 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
+                            <p className="text-xs text-gray-400 truncate">{brand.name}</p>
+                            <p className="text-sm font-bold text-gray-800 dark:text-white">{brand.totalTransactions || 0}</p>
                           </div>
                         ))}
                       </div>
@@ -425,56 +470,45 @@ export default function DashboardMain() {
         {/* Transaction Status Bar Chart */}
         <div className="rounded-2xl border border-gray-200/50 dark:border-white/5 bg-white dark:bg-gray-900/60 backdrop-blur-sm shadow-xl overflow-hidden">
           <div className="p-6 border-b border-gray-100 dark:border-white/5">
-            <SectionHeader icon={FiActivity} title="Status Transaksi" sub="Ringkasan pemrosesan" color="bg-orange-500/15 text-orange-500" />
+            <SectionHeader icon={FiActivity} title="Status Transaksi" sub={`Total ${totalStatusTransactions.toLocaleString("id-ID")} transaksi`} color="bg-orange-500/15 text-orange-500" />
           </div>
           <div className="p-6">
-            {transactionStatus.length > 0 ? (
+            {hasStatusData ? (
               <>
                 <ResponsiveContainer width="100%" height={240} minWidth={0}>
                   <BarChart data={transactionStatus} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
                     <defs>
-                      {transactionStatus.map((s, idx) => {
-                        const defaultColors = ["#22d3ee", "#a78bfa", "#f87171", "#fb923c", "#f472b6"];
-                        const color = s.color || defaultColors[idx % defaultColors.length];
-                        return (
-                          <linearGradient key={s.name || idx} id={`grad-${s.name || idx}`} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor={color} stopOpacity={1} />
-                            <stop offset="100%" stopColor={color} stopOpacity={0.4} />
-                          </linearGradient>
-                        );
-                      })}
+                      {transactionStatus.map((s, idx) => (
+                        <linearGradient key={s.name || idx} id={`grad-${s.name || idx}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={s.color} stopOpacity={1} />
+                          <stop offset="100%" stopColor={s.color} stopOpacity={0.4} />
+                        </linearGradient>
+                      ))}
                     </defs>
                     <CartesianGrid strokeDasharray="0" stroke={gridStroke} vertical={false} />
                     <XAxis dataKey="name" stroke={axisStroke} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
                     <YAxis stroke={axisStroke} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
                     <Tooltip content={<CustomBarTooltip />} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
                     <Bar dataKey="value" radius={[8, 8, 0, 0]} maxBarSize={64}>
-                      {transactionStatus.map((entry, idx) => {
-                        const defaultColors = ["#22d3ee", "#a78bfa", "#f87171", "#fb923c", "#f472b6"];
-                        const color = entry.color || defaultColors[idx % defaultColors.length];
-                        return (
-                          <Cell key={entry.name || idx} fill={`url(#grad-${entry.name || idx})`} />
-                        );
-                      })}
+                      {transactionStatus.map((entry, idx) => (
+                        <Cell key={entry.name || idx} fill={`url(#grad-${entry.name || idx})`} />
+                      ))}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
 
                 <div className="grid grid-cols-3 gap-3 mt-4">
                   {transactionStatus.map((s, idx) => {
-                    const defaultColors = ["#22d3ee", "#a78bfa", "#f87171", "#fb923c", "#f472b6"];
-                    const color = s.color || defaultColors[idx % defaultColors.length];
-                    const totalVal = transactionStatus.reduce((acc, st) => acc + (st.value || 0), 0);
-                    const pct = totalVal > 0 ? ((s.value || 0) / totalVal) * 100 : 0;
+                    const pct = totalStatusTransactions > 0 ? ((s.value || 0) / totalStatusTransactions) * 100 : 0;
                     return (
                       <div
                         key={s.name || idx}
                         className="p-4 rounded-xl border transition-all hover:scale-[1.03] cursor-default"
-                        style={{ borderColor: `${color}30`, background: `${color}10` }}
+                        style={{ borderColor: `${s.color}30`, background: `${s.color}10` }}
                       >
-                        <div className="text-2xl font-black leading-none" style={{ color: color }}>{s.value || 0}</div>
+                        <div className="text-2xl font-black leading-none" style={{ color: s.color }}>{s.value || 0}</div>
                         <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{s.name}</div>
-                        <div className="text-xs font-semibold mt-1" style={{ color: color }}>
+                        <div className="text-xs font-semibold mt-1" style={{ color: s.color }}>
                           {pct.toFixed(0)}%
                         </div>
                       </div>

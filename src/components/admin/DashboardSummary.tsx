@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { FiDollarSign, FiShoppingBag, FiTrendingUp, FiCheckCircle, FiArrowUp, FiArrowDown } from "react-icons/fi";
+import { FiDollarSign, FiShoppingBag, FiTrendingUp, FiTrendingDown, FiCheckCircle, FiArrowUp, FiArrowDown } from "react-icons/fi";
 
 interface SummaryData {
     totalRevenue: number;
     totalTransactions: number;
     successRate: number;
     avgTransaction: number;
+    totalProfit: number;
 }
 
 interface DashboardSummaryProps {
@@ -18,14 +19,17 @@ interface DashboardSummaryProps {
         totalTransactionsToday: number;
         averageTransactionToday: number;
         successRateToday: number;
+        totalProfitToday: number;
         revenueGrowthPercent: number;
         transactionGrowthPercent: number;
         averageTransactionGrowthPercent: number;
         successRateGrowthPercent: number;
+        profitGrowthPercent: number;
         totalRevenueYesterday?: number;
         totalTransactionsYesterday?: number;
         averageTransactionYesterday?: number;
         successRateYesterday?: number;
+        totalProfitYesterday?: number;
     }
 }
 
@@ -64,6 +68,19 @@ const CARD_CONFIGS = [
         border: "border-blue-500/20",
         bg: "from-blue-500/10 to-cyan-500/5",
         iconRing: "bg-blue-500/20 text-blue-400",
+        formatValue: (v: number) => `Rp ${v.toLocaleString("id-ID")}`,
+        isNumericCount: false,
+    },
+    {
+        key: "profit",
+        title: "Total Keuntungan",
+        description: "Keuntungan hari ini",
+        icon: FiTrendingUp,
+        gradient: "from-rose-500 to-red-600",
+        glow: "shadow-rose-500/25",
+        border: "border-rose-500/20",
+        bg: "from-rose-500/10 to-red-500/5",
+        iconRing: "bg-rose-500/20 text-rose-400",
         formatValue: (v: number) => `Rp ${v.toLocaleString("id-ID")}`,
         isNumericCount: false,
     },
@@ -125,18 +142,43 @@ function StatCard({
     const Icon = config.icon;
     const ChangeIcon = change.isIncrease ? FiArrowUp : FiArrowDown;
 
+    // Dinamis untuk kartu profit dan rata-rata transaksi
+    const isDynamicCard = config.key === "profit" || config.key === "avg";
+    
+    const colors = isDynamicCard ? (
+        change.isIncrease ? {
+            gradient: "from-emerald-500 to-teal-400",
+            glow: "shadow-emerald-500/25",
+            border: "border-emerald-500/20",
+            bg: "from-emerald-500/10 to-teal-500/5",
+            iconRing: "bg-emerald-500/20 text-emerald-400",
+        } : {
+            gradient: "from-rose-500 to-red-600",
+            glow: "shadow-rose-500/25",
+            border: "border-rose-500/20",
+            bg: "from-rose-500/10 to-red-500/5",
+            iconRing: "bg-rose-500/20 text-rose-400",
+        }
+    ) : {
+        gradient: config.gradient,
+        glow: config.glow,
+        border: config.border,
+        bg: config.bg,
+        iconRing: config.iconRing,
+    };
+
     return (
         <div
-            className={`relative group overflow-hidden rounded-2xl border ${config.border} bg-gradient-to-br ${config.bg} backdrop-blur-sm p-6 transition-all duration-500 hover:shadow-xl hover:${config.glow} hover:-translate-y-1 cursor-default`}
+            className={`relative group overflow-hidden rounded-2xl border ${colors.border} bg-gradient-to-br ${colors.bg} backdrop-blur-sm p-6 transition-all duration-500 hover:shadow-xl hover:${colors.glow} hover:-translate-y-1 cursor-default`}
             style={{ animationDelay: `${index * 100}ms` }}
         >
             {/* Background glow orb */}
             <div
-                className={`absolute -top-4 -right-4 w-24 h-24 rounded-full bg-gradient-to-br ${config.gradient} opacity-10 blur-2xl group-hover:opacity-20 transition-opacity duration-500`}
+                className={`absolute -top-4 -right-4 w-24 h-24 rounded-full bg-gradient-to-br ${colors.gradient} opacity-10 blur-2xl group-hover:opacity-20 transition-opacity duration-500`}
             />
 
             {/* Shimmer line */}
-            <div className={`absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${config.gradient} opacity-60`} />
+            <div className={`absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${colors.gradient} opacity-60`} />
 
             <div className="relative flex items-start justify-between">
                 <div className="flex-1">
@@ -153,8 +195,12 @@ function StatCard({
                     <p className="text-xs text-gray-500 dark:text-gray-400">{config.description}</p>
                 </div>
 
-                <div className={`flex-shrink-0 p-3 rounded-xl ${config.iconRing} ml-4`}>
-                    <Icon className="w-5 h-5" />
+                <div className={`flex-shrink-0 p-3 rounded-xl ${colors.iconRing} ml-4`}>
+                    {isDynamicCard ? (
+                        change.isIncrease ? <FiTrendingUp className="w-5 h-5" /> : <FiTrendingDown className="w-5 h-5" />
+                    ) : (
+                        <Icon className="w-5 h-5" />
+                    )}
                 </div>
             </div>
 
@@ -162,8 +208,8 @@ function StatCard({
             <div className="relative mt-4 flex items-center gap-2">
                 <div
                     className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${change.isIncrease
-                            ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20"
-                            : "bg-red-500/15 text-red-400 border border-red-500/20"
+                        ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20"
+                        : "bg-red-500/15 text-red-400 border border-red-500/20"
                         }`}
                 >
                     <ChangeIcon className="w-3 h-3" />
@@ -192,6 +238,12 @@ export function DashboardSummary({ today, yesterday, summary }: DashboardSummary
             change: { value: summary.revenueGrowthPercent ?? 0, isIncrease: (summary.revenueGrowthPercent ?? 0) >= 0 }
         },
         {
+            key: "profit",
+            value: summary.totalProfitToday ?? 0,
+            prev: summary.totalProfitYesterday ?? 0,
+            change: { value: summary.profitGrowthPercent ?? 0, isIncrease: (summary.profitGrowthPercent ?? 0) >= 0 }
+        },
+        {
             key: "transactions",
             value: summary.totalTransactionsToday ?? 0,
             prev: summary.totalTransactionsYesterday ?? 0,
@@ -210,6 +262,7 @@ export function DashboardSummary({ today, yesterday, summary }: DashboardSummary
             change: { value: summary.successRateGrowthPercent ?? 0, isIncrease: (summary.successRateGrowthPercent ?? 0) >= 0 }
         },
     ] : [
+        { key: "profit", value: today?.totalProfit ?? 0, prev: yesterday?.totalProfit ?? 0, change: calculateChange(today?.totalProfit ?? 0, yesterday?.totalProfit ?? 0) },
         { key: "revenue", value: today?.totalRevenue ?? 0, prev: yesterday?.totalRevenue ?? 0, change: calculateChange(today?.totalRevenue ?? 0, yesterday?.totalRevenue ?? 0) },
         { key: "transactions", value: today?.totalTransactions ?? 0, prev: yesterday?.totalTransactions ?? 0, change: calculateChange(today?.totalTransactions ?? 0, yesterday?.totalTransactions ?? 0) },
         { key: "avg", value: today?.avgTransaction ?? 0, prev: yesterday?.avgTransaction ?? 0, change: calculateChange(today?.avgTransaction ?? 0, yesterday?.avgTransaction ?? 0) },
@@ -217,7 +270,7 @@ export function DashboardSummary({ today, yesterday, summary }: DashboardSummary
     ];
 
     return (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
             {cards.map((card, i) => (
                 <StatCard
                     key={card.key}
@@ -242,7 +295,8 @@ export function calculateSummary(
     const successfulTransactions = dateTransactions.filter((tx) => tx.status === "success").length;
     const successRate = totalTransactions > 0 ? Math.round((successfulTransactions / totalTransactions) * 100) : 0;
     const avgTransaction = successfulTransactions > 0 ? Math.round(totalRevenue / successfulTransactions) : 0;
-    return { totalRevenue, totalTransactions, successRate, avgTransaction };
+    const totalProfit = totalRevenue * 0.1; // Fallback dummy logic if needed
+    return { totalRevenue, totalTransactions, successRate, avgTransaction, totalProfit };
 }
 
 export function calculateTodaysSummary(

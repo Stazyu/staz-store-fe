@@ -3,10 +3,12 @@ export interface DashboardSummary {
   totalTransactionsToday: number;
   averageTransactionToday: number;
   successRateToday: number;
+  totalProfitToday: number;
   revenueGrowthPercent: number;
   transactionGrowthPercent: number;
   averageTransactionGrowthPercent: number;
   successRateGrowthPercent: number;
+  profitGrowthPercent: number;
   totalProducts: number;
   activeUsers: number;
   totalCategories: number;
@@ -14,6 +16,7 @@ export interface DashboardSummary {
   totalTransactionsYesterday?: number;
   averageTransactionYesterday?: number;
   successRateYesterday?: number;
+  totalProfitYesterday?: number;
 }
 
 export interface RevenueTrendItem {
@@ -35,24 +38,41 @@ export interface RecentActivityItem {
   };
 }
 
-export interface SubCategoryDistribution {
+/* ── Category Distribution (from API) ── */
+
+export interface CategoryBrand {
   name: string;
-  count: number;
+  totalTransactions: number;
 }
 
 export interface CategoryDistributionItem {
-  category: string;
-  count: number;
-  revenue: number;
-  color?: string;
-  subcategories?: SubCategoryDistribution[];
+  categoryName: string;
+  totalTransactions: number;
+  totalRevenue: number;
+  percentage: number;
+  brands: CategoryBrand[];
 }
 
+/* ── Transaction Status ── */
+
+/** Raw shape returned by the API */
+export interface TransactionStatusRaw {
+  success: number;
+  pending: number;
+  failed: number;
+  refunded: number;
+  canceled: number;
+}
+
+/** Transformed item used by Recharts */
 export interface TransactionStatusItem {
   name: string;
+  key: string;
   value: number;
-  color?: string;
+  color: string;
 }
+
+/* ── Dashboard Payload (after service transform) ── */
 
 export interface DashboardPayload {
   summary: DashboardSummary;
