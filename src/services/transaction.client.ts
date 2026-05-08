@@ -205,3 +205,47 @@ export const fetchTransactionSummary = async (params: { userId?: string, startDa
         throw error;
     }
 };
+
+export const syncDigiflazz = async (id: string): Promise<any> => {
+    try {
+        const response = await fetchWithJwt(`${API_BASE_URL}/${id}/sync-digiflazz`, {
+            method: 'POST',
+            credentials: 'include',
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || data.error || 'Gagal sync transaksi');
+        }
+
+        return data;
+    } catch (error) {
+        console.error('Error in syncDigiflazz:', error);
+        throw error;
+    }
+};
+
+export const syncPendingDigiflazz = async (limit: number = 25): Promise<any> => {
+    try {
+        const response = await fetchWithJwt(`${API_BASE_URL}/digiflazz/sync-pending`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ limit }),
+            credentials: 'include',
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || data.error || 'Gagal sync pending transaksi');
+        }
+
+        return data;
+    } catch (error) {
+        console.error('Error in syncPendingDigiflazz:', error);
+        throw error;
+    }
+};

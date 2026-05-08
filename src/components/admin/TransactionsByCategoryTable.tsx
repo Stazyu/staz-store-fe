@@ -7,13 +7,16 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { FiEye, FiFilter, FiDownload, FiDollarSign } from "react-icons/fi";
-import { fetchTransactionsByCategory, fetchAdminTransactions } from "@/services/transaction.client";
+import { FiEye, FiFilter, FiDownload, FiDollarSign, FiRefreshCw } from "react-icons/fi";
+import { fetchTransactionsByCategory, fetchAdminTransactions, syncDigiflazz, syncPendingDigiflazz } from "@/services/transaction.client";
 import { fetchCategories } from "@/services/category.client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
 
 const statusMap: Record<string, { label: string; color: string }> = {
   SUCCESS: { label: "Berhasil", color: "bg-green-100 text-green-700" },
   PENDING: { label: "Pending", color: "bg-yellow-100 text-yellow-700" },
+  PROCESSING: { label: "Proses", color: "bg-blue-100 text-blue-700" },
   FAILED: { label: "Gagal", color: "bg-red-100 text-red-700" },
 };
 
@@ -25,6 +28,10 @@ export default function TransactionsByCategoryTable() {
   const [endDate, setEndDate] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 10;
+  const queryClient = useQueryClient();
+
+  const [syncingIds, setSyncingIds] = useState<Set<string>>(new Set());
+  const [isBulkSyncing, setIsBulkSyncing] = useState(false);
 
   // Derived query parameters
   const offset = (page - 1) * pageSize;
@@ -65,12 +72,54 @@ export default function TransactionsByCategoryTable() {
     return statusMap[statusCode] || { label: statusCode, color: "bg-gray-100 text-gray-700" };
   };
 
+  const handleSyncSingle = async (id: string) => {
+    try {
+      setSyncingIds(prev => new Set(prev).add(id));
+      await syncDigiflazz(id);
+      toast.success("Transaksi berhasil disinkronkan");
+      queryClient.invalidateQueries({ queryKey: ['transactionsByCategory'] });
+      queryClient.invalidateQueries({ queryKey: ['adminTransactions'] });
+    } catch (err: any) {
+      toast.error(err.message || "Gagal sync transaksi");
+    } finally {
+      setSyncingIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  };
+
+  const handleSyncBulk = async () => {
+    try {
+      setIsBulkSyncing(true);
+      const res = await syncPendingDigiflazz(25);
+      toast.success(`Sync pending selesai: ${res.success || 0} berhasil, ${res.failed || 0} gagal dari ${res.total || 0} transaksi`);
+      queryClient.invalidateQueries({ queryKey: ['transactionsByCategory'] });
+      queryClient.invalidateQueries({ queryKey: ['adminTransactions'] });
+    } catch (err: any) {
+      toast.error(err.message || "Gagal sync pending transaksi");
+    } finally {
+      setIsBulkSyncing(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-col gap-4">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <CardTitle>Transaksi per Kategori</CardTitle>
           <div className="flex items-center gap-2">
+            <Button
+              variant="default"
+              size="sm"
+              className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white border-none"
+              onClick={handleSyncBulk}
+              disabled={isBulkSyncing}
+            >
+              <FiRefreshCw className={isBulkSyncing ? "animate-spin" : ""} />
+              Sync Pending Digiflazz
+            </Button>
             <Button variant="outline" size="sm" className="gap-2" onClick={() => handleExport('pdf')}><FiDownload />PDF</Button>
             <Button variant="outline" size="sm" className="gap-2" onClick={() => handleExport('excel')}><FiDownload />Excel</Button>
           </div>
@@ -202,9 +251,23 @@ export default function TransactionsByCategoryTable() {
                         })}
                       </TableCell>
                       <TableCell>
-                        <Button size="icon" variant="ghost" onClick={() => setDetailId(trx.id)} className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/50">
-                          <FiEye className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button size="icon" variant="ghost" onClick={() => setDetailId(trx.id)} className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/50" title="Detail">
+                            <FiEye className="h-4 w-4" />
+                          </Button>
+                          {(trx.status === "PENDING" || trx.status === "PROCESSING") && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/50"
+                              onClick={() => handleSyncSingle(trx.id)}
+                              disabled={syncingIds.has(trx.id)}
+                              title="Sync Digiflazz"
+                            >
+                              <FiRefreshCw className={`h-4 w-4 ${syncingIds.has(trx.id) ? "animate-spin" : ""}`} />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
