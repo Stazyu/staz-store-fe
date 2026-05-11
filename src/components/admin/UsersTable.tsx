@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -227,6 +226,7 @@ export default function UsersTable() {
     const detailUser = users.find(u => u.id === detailId);
     const editUser = users.find(u => u.id === editId);
 
+
     // Render sort icon
     const renderSortIcon = (field: SortField) => {
         if (sortConfig.field !== field) return null;
@@ -311,224 +311,121 @@ export default function UsersTable() {
 
     if (error) {
         return (
-            <Card className="shadow-sm">
-                <CardHeader>
-                    <CardTitle className="text-lg text-red-600">Error Loading Users</CardTitle>
-                </CardHeader>
-                <div className="p-6 text-center">
-                    <p className="text-muted-foreground mb-4">{(error as Error).message}</p>
-                    <Button onClick={() => refetch()}>Try Again</Button>
-                </div>
-            </Card>
+            <div className="flex flex-col items-center justify-center h-[400px] text-center gap-3">
+                <FiAlertTriangle className="w-8 h-8 text-red-500" />
+                <p className="text-sm text-gray-600 dark:text-gray-300">{(error as Error).message}</p>
+                <Button variant="outline" size="sm" onClick={() => refetch()}>Coba Lagi</Button>
+            </div>
         );
     }
 
     return (
-        <Card className="shadow-sm">
-            <CardHeader className="pb-2">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <CardTitle className="text-lg">Data Users</CardTitle>
-                    <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-2">
-                        <div className="relative flex-1 sm:w-64">
-                            <FiSearch className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                type="search"
-                                placeholder="Cari user..."
-                                className="pl-8 w-full"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                        <Select value={statusFilter} onValueChange={setStatusFilter}>
-                            <SelectTrigger className="w-[140px]">
-                                <SelectValue placeholder="Status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup>
-                                    <SelectItem value="all">Semua Status</SelectItem>
-                                    <SelectItem value="active">Aktif</SelectItem>
-                                    <SelectItem value="banned">Banned</SelectItem>
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
-                        <Select value={roleFilter} onValueChange={setRoleFilter}>
-                            <SelectTrigger className="w-[120px]">
-                                <SelectValue placeholder="Role" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Semua Role</SelectItem>
-                                <SelectItem value="ADMIN">Admin</SelectItem>
-                                <SelectItem value="RESELLER">Reseller</SelectItem>
-                                <SelectItem value="BASIC">Basic</SelectItem>
-                                <SelectItem value="OFFLINE">Offline</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isLoading}>
-                            <FiRefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                            Segarkan
-                        </Button>
-                    </div>
+        <div className="space-y-6">
+
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Data Pengguna</h1>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{users.length} pengguna terdaftar</p>
                 </div>
-            </CardHeader>
+                <button onClick={handleRefresh} disabled={isLoading} className="p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors disabled:opacity-50 self-start">
+                    <FiRefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                </button>
+            </div>
+
+            {/* Table Card */}
+            <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
+
+                {/* Filters */}
+                <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row gap-2">
+                    <div className="relative flex-1 max-w-xs">
+                        <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Input type="search" placeholder="Cari user..." className="pl-9 h-9 text-sm rounded-lg" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                    </div>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-[130px] h-9 text-sm rounded-lg"><SelectValue placeholder="Status" /></SelectTrigger>
+                        <SelectContent><SelectGroup><SelectItem value="all">Semua Status</SelectItem><SelectItem value="active">Aktif</SelectItem><SelectItem value="banned">Banned</SelectItem></SelectGroup></SelectContent>
+                    </Select>
+                    <Select value={roleFilter} onValueChange={setRoleFilter}>
+                        <SelectTrigger className="w-[120px] h-9 text-sm rounded-lg"><SelectValue placeholder="Role" /></SelectTrigger>
+                        <SelectContent><SelectItem value="all">Semua Role</SelectItem><SelectItem value="ADMIN">Admin</SelectItem><SelectItem value="RESELLER">Reseller</SelectItem><SelectItem value="BASIC">Basic</SelectItem><SelectItem value="OFFLINE">Offline</SelectItem></SelectContent>
+                    </Select>
+                </div>
 
             <div className="relative overflow-x-auto">
                 <Table>
                     <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-12 text-center">No</TableHead>
-                            <TableHead
-                                className="cursor-pointer hover:bg-accent"
-                                onClick={() => handleSort('name')}
-                            >
-                                Nama {renderSortIcon('name')}
-                            </TableHead>
-                            <TableHead
-                                className="cursor-pointer hover:bg-accent"
-                                onClick={() => handleSort('email')}
-                            >
-                                Email {renderSortIcon('email')}
-                            </TableHead>
-                            <TableHead>No. HP</TableHead>
-                            <TableHead
-                                className="text-right cursor-pointer hover:bg-accent"
-                                onClick={() => handleSort('balance')}
-                            >
-                                Balance {renderSortIcon('balance')}
-                            </TableHead>
-                            <TableHead
-                                className="cursor-pointer hover:bg-accent"
-                                onClick={() => handleSort('role')}
-                            >
-                                Role {renderSortIcon('role')}
-                            </TableHead>
-                            <TableHead>Pricing Tier</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-center">Aksi</TableHead>
+                        <TableRow className="border-gray-100 dark:border-gray-800">
+                            <TableHead className="w-12 text-center text-xs">No</TableHead>
+                            <TableHead className="text-xs cursor-pointer select-none" onClick={() => handleSort('name')}>Nama {renderSortIcon('name')}</TableHead>
+                            <TableHead className="text-xs cursor-pointer select-none" onClick={() => handleSort('email')}>Email {renderSortIcon('email')}</TableHead>
+                            <TableHead className="text-xs">No. HP</TableHead>
+                            <TableHead className="text-xs text-right cursor-pointer select-none" onClick={() => handleSort('balance')}>Balance {renderSortIcon('balance')}</TableHead>
+                            <TableHead className="text-xs cursor-pointer select-none" onClick={() => handleSort('role')}>Role {renderSortIcon('role')}</TableHead>
+                            <TableHead className="text-xs">Tier</TableHead>
+                            <TableHead className="text-xs">Status</TableHead>
+                            <TableHead className="text-xs text-center">Aksi</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {isLoading ? (
-                            <TableRow>
-                                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                                    Loading...
-                                </TableCell>
-                            </TableRow>
+                            <TableRow><TableCell colSpan={9} className="h-48 text-center">
+                                <FiRefreshCw className="animate-spin text-xl text-gray-400 mx-auto" />
+                            </TableCell></TableRow>
                         ) : paginatedUsers.length > 0 ? (
                             paginatedUsers.map((user, idx) => (
-                                <TableRow key={user.id} className="hover:bg-accent/50">
-                                    <TableCell className="font-medium text-center">{(currentPage - 1) * rowsPerPage + idx + 1}</TableCell>
-                                    <TableCell className="font-medium">{user.name}</TableCell>
-                                    <TableCell className="text-muted-foreground">{user.email}</TableCell>
-                                    <TableCell>{user.phoneNumber}</TableCell>
-                                    <TableCell className="text-right font-medium">Rp {user.balance.toLocaleString('id-ID')}</TableCell>
+                                <TableRow key={user.id} className="border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                    <TableCell className="text-center text-sm text-gray-400">{(currentPage - 1) * rowsPerPage + idx + 1}</TableCell>
+                                    <TableCell className="font-medium text-sm text-gray-900 dark:text-white">{user.name}</TableCell>
+                                    <TableCell className="text-sm text-gray-500 dark:text-gray-400">{user.email}</TableCell>
+                                    <TableCell className="text-sm text-gray-600 dark:text-gray-300">{user.phoneNumber}</TableCell>
+                                    <TableCell className="text-right text-sm font-medium text-gray-900 dark:text-white">Rp {user.balance.toLocaleString('id-ID')}</TableCell>
                                     <TableCell>
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${user.role === 'ADMIN' ? 'bg-purple-700 text-gray-100' :
-                                            user.role === 'RESELLER' ? 'bg-blue-700 text-gray-100' :
-                                                user.role === 'OFFLINE' ? 'bg-yellow-700 text-gray-100' :
-                                                    'bg-gray-700 text-gray-100'
-                                            }`}>
-                                            {user.role.charAt(0) + user.role.slice(1).toLowerCase()}
-                                        </span>
+                                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${user.role === 'ADMIN' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' :
+                                            user.role === 'RESELLER' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
+                                                user.role === 'OFFLINE' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300' :
+                                                    'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                                            }`}>{user.role.charAt(0) + user.role.slice(1).toLowerCase()}</span>
                                     </TableCell>
+                                    <TableCell><span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">{user.pricingTierId || 'BRONZE'}</span></TableCell>
                                     <TableCell>
-                                        <span className="px-2 py-1 rounded-full bg-indigo-700 text-gray-100 text-xs font-medium">
-                                            {user.pricingTierId || 'BRONZE'}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell>
-                                        {!user.banned ? (
-                                            <span className="px-2 py-1 rounded-full bg-green-700 text-gray-100 text-xs font-medium transition-none">
-                                                Aktif
-                                            </span>
-                                        ) : (
-                                            <span className="px-2 py-1 rounded-full bg-red-700 text-gray-100 text-xs font-medium transition-none">
-                                                Banned
-                                            </span>
-                                        )}
+                                        {!user.banned
+                                            ? <span className="px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 transition-none">Aktif</span>
+                                            : <span className="px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 transition-none">Banned</span>
+                                        }
                                     </TableCell>
                                     <TableCell className="text-center">
-                                        <div className="flex space-x-1 justify-center">
-                                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setDetailId(user.id)}>
-                                                <FiEye className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                                size="icon"
-                                                variant="ghost"
-                                                className="h-8 w-8 text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                onClick={() => handleEdit(user)}
-                                                disabled={session?.user?.id === user.id}
-                                                title={session?.user?.id === user.id ? "Tidak dapat mengedit akun sendiri" : "Edit user"}
-                                            >
-                                                <FiEdit2 className="h-4 w-4" />
-                                            </Button>
+                                        <div className="flex gap-0.5 justify-center">
+                                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setDetailId(user.id)}><FiEye className="h-3.5 w-3.5" /></Button>
+                                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleEdit(user)} disabled={session?.user?.id === user.id}><FiEdit2 className="h-3.5 w-3.5" /></Button>
                                             {!user.banned ? (
-                                                <Button
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    className="h-8 w-8 text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                    onClick={() => handleToggleBan(user.id, user.banned)}
-                                                    disabled={toggleBanMutation.isPending || session?.user?.id === user.id}
-                                                    title={session?.user?.id === user.id ? "Tidak dapat ban akun sendiri" : "Ban user"}
-                                                >
-                                                    <FiUserX className="h-4 w-4" />
-                                                </Button>
+                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:text-red-600" onClick={() => handleToggleBan(user.id, user.banned)} disabled={toggleBanMutation.isPending || session?.user?.id === user.id}><FiUserX className="h-3.5 w-3.5" /></Button>
                                             ) : (
-                                                <Button
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    className="h-8 w-8 text-green-600 hover:text-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                    onClick={() => handleToggleBan(user.id, user.banned)}
-                                                    disabled={toggleBanMutation.isPending || session?.user?.id === user.id}
-                                                >
-                                                    <FiUserCheck className="h-4 w-4" />
-                                                </Button>
+                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-green-500 hover:text-green-600" onClick={() => handleToggleBan(user.id, user.banned)} disabled={toggleBanMutation.isPending || session?.user?.id === user.id}><FiUserCheck className="h-3.5 w-3.5" /></Button>
                                             )}
                                         </div>
                                     </TableCell>
                                 </TableRow>
                             ))
                         ) : (
-                            <TableRow>
-                                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                                    Tidak ada data user yang ditemukan
-                                </TableCell>
-                            </TableRow>
+                            <TableRow><TableCell colSpan={9} className="h-48 text-center text-gray-400 text-sm">Tidak ada data pengguna ditemukan</TableCell></TableRow>
                         )}
                     </TableBody>
                 </Table>
             </div>
 
-            <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4 border-t px-6 py-4">
-                <div className="text-sm text-muted-foreground">
-                    Menampilkan {paginatedUsers.length > 0 ? (currentPage - 1) * rowsPerPage + 1 : 0} - {
-                        Math.min(currentPage * rowsPerPage, filteredAndSortedUsers.length)
-                    } dari {filteredAndSortedUsers.length} users
-                </div>
-                <div className="flex items-center gap-2">
+                <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <span className="text-xs text-gray-500">
+                        {paginatedUsers.length > 0 ? (currentPage - 1) * rowsPerPage + 1 : 0}–{Math.min(currentPage * rowsPerPage, filteredAndSortedUsers.length)} dari {filteredAndSortedUsers.length}
+                    </span>
                     <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium">Baris per halaman</p>
-                        <Select
-                            value={`${rowsPerPage}`}
-                            onValueChange={(value: string) => {
-                                setRowsPerPage(Number(value));
-                                setCurrentPage(1);
-                            }}
-                        >
-                            <SelectTrigger className="h-8 w-[70px]">
-                                <SelectValue placeholder={rowsPerPage.toString()} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {[5, 10, 20, 30, 40, 50].map((pageSize) => (
-                                    <SelectItem key={pageSize} value={`${pageSize}`}>
-                                        {pageSize}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
+                        <Select value={`${rowsPerPage}`} onValueChange={(v: string) => { setRowsPerPage(Number(v)); setCurrentPage(1); }}>
+                            <SelectTrigger className="h-8 w-[65px] text-xs rounded-lg"><SelectValue /></SelectTrigger>
+                            <SelectContent>{[5, 10, 20, 50].map(n => <SelectItem key={n} value={`${n}`}>{n}</SelectItem>)}</SelectContent>
                         </Select>
+                        {totalPages > 1 && renderPagination()}
                     </div>
-                    {totalPages > 1 && renderPagination()}
                 </div>
-            </CardFooter>
 
             {/* Detail Modal */}
             <Dialog open={!!detailId} onOpenChange={() => setDetailId(null)}>
@@ -914,6 +811,7 @@ export default function UsersTable() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </Card >
+        </div>
+        </div>
     );
 }

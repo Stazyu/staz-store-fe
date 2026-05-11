@@ -19,12 +19,44 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { FiEdit2, FiTrash2, FiPlus, FiEye, FiSearch, FiPackage, FiLayers, FiTag, FiChevronLeft, FiChevronRight, FiX, FiCheckCircle, FiInfo } from "react-icons/fi";
-import { HiOutlineSparkles } from "react-icons/hi2";
+import {
+    FiEdit2, FiTrash2, FiPlus, FiEye, FiSearch, FiPackage,
+    FiLayers, FiTag, FiChevronLeft, FiChevronRight, FiX,
+    FiCheckCircle, FiInfo, FiRefreshCw, FiActivity,
+    FiTrendingUp, FiBox, FiLoader
+} from "react-icons/fi";
 import Image from "next/image";
+
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { Switch } from "@/components/ui/switch";
 import toast from "react-hot-toast";
+
+
+/* ─── Helpers ───────────────────────────────────────────────────────────── */
+function LiveDot() {
+    return (
+        <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
+        </span>
+    );
+}
+
+
+function MiniStat({ icon: Icon, label, value, color }: { icon: any; label: string; value: string | number; color: string }) {
+    return (
+        <div className="flex items-center gap-3">
+            <div className={`p-2 rounded-lg bg-white/10 ${color}`}>
+                <Icon className="w-4 h-4" />
+            </div>
+            <div>
+                <div className="text-white font-bold text-base leading-none">{value}</div>
+                <div className="text-white/50 text-[10px] uppercase tracking-wider mt-0.5">{label}</div>
+            </div>
+        </div>
+    );
+}
+
 
 
 // Extend Brand shape to include optional categoryId when present from API
@@ -123,13 +155,26 @@ export default function BrandTable() {
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const rowsPerPage = 5;
 
-    // Chart dummy: jumlah produk per brand
-    // const chartData = brands.map(brand => ({
-    //     name: brand.name,
-    //     value: Math.floor(Math.random() * 10) + 1
-    // }));
 
-    // Mutations
+    const stats = React.useMemo(() => {
+        const totalProducts = brands.reduce((acc, b) => acc + (b._count?.products || 0), 0);
+        const activeCount = brands.filter(b => b.isActive).length;
+        const topBrand = [...brands].sort((a, b) => (b._count?.products || 0) - (a._count?.products || 0))[0];
+        const avgProducts = brands.length > 0 ? (totalProducts / brands.length).toFixed(1) : 0;
+
+        return { totalProducts, activeCount, topBrand, avgProducts };
+    }, [brands]);
+
+    // Filter & pagination
+    const filteredBrands = React.useMemo(() =>
+        brands.filter(brand =>
+            search ? brand.name.toLowerCase().includes(search.toLowerCase()) : true
+        ), [brands, search]);
+
+    const totalPage = Math.ceil(filteredBrands.length / rowsPerPage);
+    const paginatedBrands = React.useMemo(() =>
+        filteredBrands.slice((page - 1) * rowsPerPage, page * rowsPerPage),
+        [filteredBrands, page, rowsPerPage]);
     const createMutation = useMutation({
         mutationFn: createBrand,
         onSuccess: () => {
@@ -187,12 +232,8 @@ export default function BrandTable() {
     // formError -> dialogs.
 
 
-    // Filter & pagination
-    const filteredBrands = brands.filter(brand =>
-        search ? brand.name.toLowerCase().includes(search.toLowerCase()) : true
-    );
-    const paginatedBrands = filteredBrands.slice((page - 1) * rowsPerPage, page * rowsPerPage);
     const detailBrand = detailId ? brands.find(brand => brand.id === detailId) : null;
+
     console.log("paginatedBrands : ", paginatedBrands);
 
     if (isLoading && brands.length === 0) {
@@ -267,8 +308,8 @@ export default function BrandTable() {
 
     const handleEdit = (brandItem: Brand) => {
         setEditId(brandItem.id);
-        setName(brandItem.name);
-        setBrand(brandItem.code);
+        setName(brandItem.name || "");
+        setBrand(brandItem.code || "");
         // Prefer categoryId from payload, otherwise derive from category object/name
         const catIdFromPayload = (brandItem as BrandWithCategoryId).categoryId;
         if (catIdFromPayload) {
@@ -388,738 +429,519 @@ export default function BrandTable() {
     };
 
     return (
-        <div className="space-y-6">
-            {/* Header Section - Premium Design */}
-            <div className="relative overflow-hidden rounded-3xl">
-                {/* Background with glassmorphism */}
-                <div className="absolute inset-0 bg-linear-to-br from-blue-600 via-blue-700 to-indigo-700"></div>
-                <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23ffffff%22 fill-opacity=%220.05%22%3E%3Cpath d=%22M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]"></div>
+        <div className="space-y-8 pb-8">
+            {/* ── Hero Header ── */}
+            <div className="relative overflow-hidden rounded-3xl p-8">
+                <div className="absolute inset-0 bg-linear-to-br from-slate-950 via-blue-950 to-indigo-950" />
+                <div
+                    className="absolute inset-0 opacity-10"
+                    style={{
+                        backgroundImage: "linear-gradient(rgba(255,255,255,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.07) 1px, transparent 1px)",
+                        backgroundSize: "32px 32px",
+                    }}
+                />
 
-                {/* Floating decorative elements */}
-                <div className="absolute top-4 right-10 w-20 h-20 bg-white/10 rounded-full blur-2xl"></div>
-                <div className="absolute bottom-4 left-20 w-32 h-32 bg-sky-400/20 rounded-full blur-3xl"></div>
-                <div className="absolute top-1/2 right-1/4 w-16 h-16 bg-indigo-300/15 rounded-full blur-xl"></div>
-
-                <div className="relative px-8 py-10">
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
-                                    <FiPackage className="h-7 w-7 text-white" />
-                                </div>
-                                <div>
-                                    <h1 className="text-3xl lg:text-4xl font-bold text-white tracking-tight">
-                                        Kelola Brand
-                                    </h1>
-                                    <p className="text-blue-100 text-base mt-1">
-                                        Kelola dan pantau semua brand yang tersedia
-                                    </p>
-                                </div>
-                            </div>
+                <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <div>
+                        <div className="flex items-center gap-3 mb-3">
+                            <LiveDot />
+                            <span className="text-xs font-semibold text-blue-400 uppercase tracking-widest">Brand Global</span>
                         </div>
-
-                        <div className="flex items-center gap-4">
-                            {/* Stats card */}
-                            <div className="hidden md:flex items-center gap-3 bg-white/15 backdrop-blur-sm rounded-xl px-5 py-3 border border-white/20">
-                                <div className="p-2 bg-white/20 rounded-lg">
-                                    <FiLayers className="h-5 w-5 text-white" />
-                                </div>
-                                <div>
-                                    <p className="text-xs text-violet-200">Total Brand</p>
-                                    <p className="text-xl font-bold text-white">{brands.length}</p>
-                                </div>
-                            </div>
-
-                            <Button
-                                onClick={handleAdd}
-                                className="bg-white hover:bg-gray-50 text-blue-700 px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 flex items-center gap-2"
-                            >
-                                <HiOutlineSparkles className="h-5 w-5" />
-                                Tambah Brand
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Search and Filters - Modern Card */}
-            <div className="bg-white dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl shadow-lg shadow-gray-200/50 dark:shadow-gray-900/50 border border-gray-100 dark:border-gray-700/50 p-5">
-                <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-                    <div className="relative flex-1 max-w-lg">
-                        <div className="absolute left-4 top-1/2 transform -translate-y-1/2 p-1.5 bg-linear-to-br from-blue-100 to-sky-100 dark:from-blue-900/20 dark:to-sky-900/20 rounded-lg">
-                            <FiSearch className="text-blue-600 dark:text-blue-400 h-4 w-4" />
-                        </div>
-                        <Input
-                            placeholder="Cari brand berdasarkan nama..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="pl-14 pr-4 py-3 border-gray-200 dark:border-gray-700 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500/20 dark:focus:ring-blue-400/20 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-200"
-                        />
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                        {/* Filter info badge */}
-                        <div className="flex items-center gap-2 px-4 py-2 bg-linear-to-r from-blue-50 to-sky-50 dark:from-blue-900/20 dark:to-sky-900/20 rounded-xl border border-blue-200/50 dark:border-blue-700/50">
-                            <FiTag className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                            <span className="text-sm text-gray-600 dark:text-gray-300">
-                                Menampilkan <span className="font-bold text-blue-600 dark:text-blue-400">{filteredBrands.length}</span> brand
+                        <h1 className="text-4xl md:text-5xl font-black text-white leading-none tracking-tight">
+                            Manajemen
+                            <span className="bg-linear-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent ml-3">
+                                Brand
                             </span>
-                        </div>
+                        </h1>
+                        <p className="text-blue-200/70 mt-3 text-base max-w-md">
+                            Kelola koleksi brand, integrasi kategori, dan pantau stok produk secara real-time.
+                        </p>
                     </div>
+
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => queryClient.invalidateQueries({ queryKey: ['brands'] })}
+                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-medium border border-white/10 backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 group"
+                        >
+                            <FiRefreshCw className="w-4 h-4 group-hover:rotate-180 transition-transform duration-500" />
+                            Segarkan
+                        </button>
+                        <button
+                            onClick={handleAdd}
+                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-linear-to-r from-blue-500 to-indigo-500 hover:from-blue-400 hover:to-indigo-400 text-white text-sm font-medium shadow-lg shadow-blue-500/30 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
+                        >
+                            <FiPlus className="w-4 h-4" />
+                            Tambah Brand
+                        </button>
+                    </div>
+                </div>
+
+                <div className="relative mt-8 grid grid-cols-2 md:grid-cols-4 gap-6 pt-6 border-t border-white/10">
+                    <MiniStat icon={FiBox} label="Total Brand" value={brands.length} color="text-blue-400" />
+                    <MiniStat icon={FiPackage} label="Total Produk" value={stats.totalProducts} color="text-indigo-400" />
+                    <MiniStat icon={FiCheckCircle} label="Brand Aktif" value={stats.activeCount} color="text-emerald-400" />
+                    <MiniStat icon={FiTrendingUp} label="Top Brand" value={stats.topBrand?.name || "-"} color="text-violet-400" />
                 </div>
             </div>
 
-            {/* Table Section - Modern Card Design */}
-            <div className="bg-white dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl shadow-lg shadow-gray-200/50 dark:shadow-gray-900/50 border border-gray-100 dark:border-gray-700/50 overflow-hidden">
-                {/* Table Header Bar */}
-                <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700/50 bg-linear-to-r from-gray-50/80 to-gray-50/40 dark:from-gray-800/80 dark:to-gray-800/40">
-                    <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-linear-to-br from-blue-500 to-indigo-500 rounded-lg">
-                            <FiLayers className="h-4 w-4 text-white" />
+            {/* ── Main Content Grid ── */}
+            <div className="grid grid-cols-1 gap-6">
+
+                {/* Table Card */}
+                <div className="rounded-2xl border border-gray-200/50 dark:border-white/5 bg-white dark:bg-gray-900/60 backdrop-blur-sm shadow-xl overflow-hidden">
+
+                    <div className="p-6 border-b border-gray-100 dark:border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-indigo-500/15 text-indigo-500">
+                                <FiLayers className="w-4 h-4" />
+                            </div>
+                            <div>
+                                <h2 className="text-base font-bold text-gray-900 dark:text-white leading-none">Daftar Brand</h2>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Total {filteredBrands.length} brand ditemukan</p>
+                            </div>
                         </div>
-                        <h3 className="font-semibold text-gray-800 dark:text-gray-200">Daftar Brand</h3>
+                        <div className="relative group">
+                            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+                            <Input
+                                value={search || ""}
+                                onChange={e => setSearch(e.target.value)}
+                                placeholder="Cari brand..."
+                                className="pl-10 w-full md:w-64 h-10 bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-white/10 rounded-xl focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                            />
+                        </div>
                     </div>
-                </div>
 
-                <div className="overflow-x-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow className="bg-linear-to-r from-blue-50/50 via-sky-50/30 to-indigo-50/50 dark:from-blue-900/10 dark:via-sky-900/10 dark:to-indigo-900/10 hover:from-blue-50/50 hover:via-sky-50/30 hover:to-indigo-50/50 dark:hover:from-blue-900/10 dark:hover:via-sky-900/10 dark:hover:to-indigo-900/10 border-b border-gray-100 dark:border-gray-700/50">
-                                <TableHead className="font-bold text-blue-700 dark:text-blue-300 py-4 text-xs uppercase tracking-wider w-[50px] text-center">No</TableHead>
-                                <TableHead className="font-bold text-blue-700 dark:text-blue-300 text-xs uppercase tracking-wider w-[80px] text-center">Logo</TableHead>
-                                <TableHead className="font-bold text-blue-700 dark:text-blue-300 text-xs uppercase tracking-wider">Nama Brand</TableHead>
-                                <TableHead className="font-bold text-blue-700 dark:text-blue-300 text-xs uppercase tracking-wider">Kode</TableHead>
-                                <TableHead className="font-bold text-blue-700 dark:text-blue-300 text-xs uppercase tracking-wider">Publisher</TableHead>
-                                <TableHead className="font-bold text-blue-700 dark:text-blue-300 text-xs uppercase tracking-wider pl-6 w-[120px]">Tipe</TableHead>
-                                <TableHead className="font-bold text-blue-700 dark:text-blue-300 text-xs uppercase tracking-wider">Kategori</TableHead>
-                                <TableHead className="font-bold text-blue-700 dark:text-blue-300 text-xs uppercase tracking-wider">Metode</TableHead>
-                                <TableHead className="font-bold text-blue-700 dark:text-blue-300 text-xs uppercase tracking-wider">Profit</TableHead>
-                                <TableHead className="font-bold text-blue-700 dark:text-blue-300 text-xs uppercase tracking-wider text-center">Status</TableHead>
-                                <TableHead className="font-bold text-blue-700 dark:text-blue-300 text-xs uppercase tracking-wider text-center">Aksi</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {paginatedBrands.map((brand, index) => {
-                                if (!brand) return null;
-                                const catNameResolved = brand?.category
-                                    ? resolveCategoryName(
-                                        brand.category as string | CategoryObject | undefined,
-                                        (brand as BrandWithCategoryId).categoryId,
-                                        categories
-                                    )
-                                    : 'No Category';
-                                return (
-                                    <TableRow
-                                        key={brand.id}
-                                        className="group hover:bg-linear-to-r hover:from-blue-50/30 hover:via-sky-50/20 hover:to-indigo-50/30 dark:hover:from-blue-900/5 dark:hover:via-sky-900/5 dark:hover:to-indigo-900/5 transition-all duration-300 border-b border-gray-50 dark:border-gray-800"
-                                    >
-                                        <TableCell className="py-4 text-center">
-                                            <div className="w-8 h-8 mx-auto flex items-center justify-center bg-linear-to-br from-blue-100 to-sky-100 dark:from-blue-900/30 dark:to-sky-900/30 rounded-lg text-sm font-bold text-blue-700 dark:text-blue-300">
-                                                {index + 1 + (page - 1) * rowsPerPage}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center justify-center">
-                                                {brand?.logo ? (
-                                                    <div className="relative group/logo">
-                                                        <div className="absolute -inset-1 bg-linear-to-r from-blue-500 to-indigo-500 rounded-xl blur opacity-0 group-hover/logo:opacity-40 transition-opacity duration-300"></div>
-                                                        <Image
-                                                            src={brand.logo}
-                                                            alt={brand.name}
-                                                            width={48}
-                                                            height={48}
-                                                            className="relative h-12 w-12 object-contain rounded-xl border-2 border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-1"
-                                                        />
-                                                    </div>
-                                                ) : (
-                                                    <div className="h-12 w-12 rounded-xl bg-linear-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center border-2 border-gray-200 dark:border-gray-600">
-                                                        <FiPackage className="h-5 w-5 text-gray-400 dark:text-gray-500" />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="space-y-0.5">
-                                                <div className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">{brand?.name}</div>
-                                                <div className="text-xs text-gray-400 dark:text-gray-500">Brand ID: {brand?.id}</div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <code className="text-xs bg-linear-to-r from-gray-100 to-gray-50 dark:from-gray-700 dark:to-gray-800 px-3 py-1.5 rounded-lg font-mono text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
-                                                {brand?.code}
-                                            </code>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                                                    <svg className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                                    </svg>
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="hover:bg-transparent border-gray-100 dark:border-white/5">
+                                    <TableHead className="w-16 text-center font-bold text-xs uppercase tracking-wider">No</TableHead>
+                                    <TableHead className="w-16 text-center font-bold text-xs uppercase tracking-wider">Logo</TableHead>
+                                    <TableHead className="font-bold text-xs uppercase tracking-wider min-w-[150px]">Brand</TableHead>
+                                    <TableHead className="font-bold text-xs uppercase tracking-wider">Kode</TableHead>
+                                    <TableHead className="font-bold text-xs uppercase tracking-wider">Publisher</TableHead>
+                                    <TableHead className="font-bold text-xs uppercase tracking-wider min-w-[120px] pl-4">Tipe</TableHead>
+                                    <TableHead className="font-bold text-xs uppercase tracking-wider">Kategori</TableHead>
+                                    <TableHead className="font-bold text-xs uppercase tracking-wider">Metode</TableHead>
+                                    {/* <TableHead className="font-bold text-xs uppercase tracking-wider">Profit</TableHead> */}
+                                    <TableHead className="text-center font-bold text-xs uppercase tracking-wider">Status</TableHead>
+                                    <TableHead className="text-center font-bold text-xs uppercase tracking-wider pl-12">Aksi</TableHead>
+
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {paginatedBrands.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="h-64 text-center">
+                                            <div className="flex flex-col items-center gap-3">
+                                                <div className="p-4 rounded-full bg-gray-100 dark:bg-white/5">
+                                                    <FiPackage className="text-3xl text-gray-300" />
                                                 </div>
-                                                <span className="font-medium text-gray-700 dark:text-gray-300">{getPublisherName(brand?.publisher)}</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            {brand?.types && brand.types.length > 0 ? (
-                                                <div className="flex flex-wrap gap-1">
-                                                    {brand.types.map(t => (
-                                                        <span key={t.id} className="inline-flex items-center gap-1.5 px-2 py-1 text-[10px] font-semibold rounded-full bg-linear-to-r from-blue-100 to-sky-100 dark:from-blue-900/30 dark:to-sky-900/30 text-blue-700 dark:text-blue-300 border border-blue-200/50 dark:border-blue-700/50">
-                                                            {t.name}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <span className="text-xs text-gray-500 dark:text-gray-400 italic">Belum ada type</span>
-                                            )}
-                                        </TableCell>
-                                        <TableCell>
-                                            <span
-                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-full border"
-                                                style={{
-                                                    backgroundColor: `${getCategoryColor(catNameResolved)}15`,
-                                                    color: getCategoryColor(catNameResolved),
-                                                    borderColor: `${getCategoryColor(catNameResolved)}30`
-                                                }}
-                                            >
-                                                <span
-                                                    className="w-1.5 h-1.5 rounded-full"
-                                                    style={{ backgroundColor: getCategoryColor(catNameResolved) }}
-                                                ></span>
-                                                {catNameResolved}
-                                            </span>
-                                        </TableCell>
-
-                                        <TableCell>
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg border ${brand.profitMethod === 'PERCENTAGE' || brand.profitMethod === 'MARGIN'
-                                                ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800'
-                                                : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800'
-                                                }`}>
-                                                {brand.profitMethod || '-'}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex flex-col gap-1 max-w-[150px]">
-                                                {brand.profitMethod === 'MARGIN' && brand.margins && brand.margins.length > 0 ? (
-                                                    brand.margins.map((m, idx) => {
-                                                        const tierName = pricingTiers.find(pt => String(pt.id) === String(m.tierId))?.name || `T${m.tierId}`;
-                                                        const shortName = tierName.substring(0, 1).toUpperCase();
-                                                        return (
-                                                            <div key={idx} className="flex items-center gap-2 text-[10px] text-gray-500 dark:text-gray-400">
-                                                                <span className="w-3" title={tierName}>{shortName}</span>
-                                                                <span className="font-medium text-gray-700 dark:text-gray-300 shrink-0">
-                                                                    {m.percentage} %
-                                                                </span>
-                                                            </div>
-                                                        );
-                                                    })
-                                                ) : (
-                                                    <span className="text-xs text-gray-400">-</span>
-                                                )}
-                                            </div>
-                                        </TableCell>
-
-                                        <TableCell className="text-center">
-                                            <div className="flex justify-center">
-                                                <Switch
-                                                    checked={brand.isActive}
-                                                    onCheckedChange={() => handleToggleActive(brand)}
-                                                />
-                                            </div>
-                                        </TableCell>
-
-                                        <TableCell>
-                                            <div className="flex justify-center">
-                                                <div className="flex items-center gap-1 p-1 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                                                    <Button
-                                                        title="Lihat Detail"
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => setDetailId(brand.id)}
-                                                        className="h-8 w-8 p-0 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200"
-                                                    >
-                                                        <FiEye className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button
-                                                        title="Edit"
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleEdit(brand)}
-                                                        className="h-8 w-8 p-0 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-200"
-                                                    >
-                                                        <FiEdit2 className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button
-                                                        title="Hapus"
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleDelete(brand.id)}
-                                                        className="h-8 w-8 p-0 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 transition-all duration-200"
-                                                    >
-                                                        <FiTrash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
+                                                <p className="text-sm text-gray-500 font-medium">Tidak ada brand ditemukan</p>
                                             </div>
                                         </TableCell>
                                     </TableRow>
-                                );
-                            })}
-                        </TableBody>
-                    </Table>
-                </div>
+                                ) : (
+                                    paginatedBrands.map((brand, idx) => {
+                                        const catNameResolved = brand?.category
+                                            ? resolveCategoryName(
+                                                brand.category as string | CategoryObject | undefined,
+                                                (brand as BrandWithCategoryId).categoryId,
+                                                categories
+                                            )
+                                            : 'Tanpa Kategori';
 
-                {/* Pagination Section - Modern Design */}
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-5 bg-linear-to-r from-gray-50/80 to-gray-100/50 dark:from-gray-800/80 dark:to-gray-900/50 border-t border-gray-100 dark:border-gray-700/50">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                            <FiLayers className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-300">
-                            {(() => {
-                                const startItem = (page - 1) * rowsPerPage + 1;
-                                const endItem = Math.min(page * rowsPerPage, filteredBrands.length);
-                                const totalItems = filteredBrands.length;
+                                        return (
+                                            <TableRow key={brand.id} className="group hover:bg-gray-50 dark:hover:bg-white/5 border-gray-100 dark:border-white/5 transition-colors">
+                                                <TableCell className="text-center text-xs font-medium text-gray-400">
+                                                    {(page - 1) * rowsPerPage + idx + 1}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex justify-center">
+                                                        {brand.logo ? (
+                                                            <div className="relative w-11 h-11 rounded-xl overflow-hidden border border-gray-100 dark:border-white/10 bg-white p-1">
+                                                                <Image src={brand.logo} alt={brand.name} fill className="object-contain" />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-white/5 flex items-center justify-center">
+                                                                <FiBox className="text-gray-400 w-5 h-5" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="py-1">
+                                                        <p className="text-[15px] font-semibold text-gray-900 dark:text-white group-hover:text-blue-500 transition-colors whitespace-nowrap tracking-tight">{brand.name}</p>
+                                                        <p className="text-[10px] text-gray-400 font-medium tracking-tight truncate max-w-[200px] mt-0.5">ID: {brand.id}</p>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <code className="text-xs bg-gray-100 dark:bg-white/5 px-2 py-1 rounded-md font-mono font-medium text-blue-500">
+                                                        {brand.code}
+                                                    </code>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="p-1.5 bg-blue-500/10 rounded-lg text-blue-500">
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                            </svg>
+                                                        </div>
+                                                        <span className="text-sm font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">{getPublisherName(brand.publisher)}</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {brand.types && brand.types.length > 0 ? (
+                                                        <div className="flex flex-wrap gap-1.5 max-w-[180px]">
+                                                            {brand.types.map(t => (
+                                                                <span key={t.id} className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md bg-blue-500/5 text-blue-500 border border-blue-500/10">
+                                                                    {t.name}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-xs text-gray-400 italic">Tanpa tipe</span>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <span
+                                                        className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-lg border"
+                                                        style={{
+                                                            backgroundColor: `${getCategoryColor(catNameResolved)}15`,
+                                                            color: getCategoryColor(catNameResolved),
+                                                            borderColor: `${getCategoryColor(catNameResolved)}30`
+                                                        }}
+                                                    >
+                                                        {catNameResolved}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <span className={`inline-flex items-center px-2 py-0.5 text-xs font-bold rounded-md border ${brand.profitMethod === 'PERCENTAGE' || brand.profitMethod === 'MARGIN'
+                                                        ? 'bg-violet-500/10 text-violet-500 border-violet-500/20'
+                                                        : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                                                        }`}>
+                                                        {brand.profitMethod || '-'}
+                                                    </span>
+                                                </TableCell>
+                                                {/* <TableCell>
+                                                    <div className="flex flex-col gap-0.5">
+                                                        {brand.profitMethod === 'MARGIN' && brand.margins && brand.margins.length > 0 ? (
+                                                            brand.margins.slice(0, 2).map((m, idx) => {
+                                                                const tierName = pricingTiers.find(pt => String(pt.id) === String(m.tierId))?.name || `T${m.tierId}`;
+                                                                return (
+                                                                    <div key={idx} className="flex items-center justify-between gap-2 text-xs">
+                                                                        <span className="text-gray-400 uppercase font-semibold tracking-tighter text-[10px]">{tierName.substring(0, 3)}</span>
+                                                                        <span className="font-semibold text-gray-700 dark:text-gray-300">{m.percentage}%</span>
+                                                                    </div>
+                                                                );
+                                                            })
+                                                        ) : (
+                                                            <span className="text-xs text-gray-400">-</span>
+                                                        )}
+                                                    </div>
+                                                </TableCell> */}
+                                                <TableCell className="text-center">
+                                                    <Switch
+                                                        checked={brand.isActive}
+                                                        onCheckedChange={() => handleToggleActive(brand)}
+                                                    />
+                                                </TableCell>
 
-                                if (totalItems === 0) {
-                                    return <span className="text-gray-400 dark:text-gray-500">Tidak ada brand ditemukan</span>;
-                                }
-
-                                return (
-                                    <>
-                                        Menampilkan <span className="font-bold text-blue-600 dark:text-blue-400">{startItem}-{endItem}</span> dari <span className="font-bold text-gray-900 dark:text-gray-100">{totalItems}</span> brand
-                                    </>
-                                );
-                            })()}
-                        </div>
+                                                <TableCell>
+                                                    <div className="flex justify-end gap-1 pr-4">
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            onClick={() => handleEdit(brand)}
+                                                            className="w-9 h-9 rounded-xl hover:bg-blue-500/10 hover:text-blue-500 transition-all"
+                                                        >
+                                                            <FiEdit2 className="w-4 h-4" />
+                                                        </Button>
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            onClick={() => setDetailId(brand.id)}
+                                                            className="w-9 h-9 rounded-xl hover:bg-indigo-500/10 hover:text-indigo-500 transition-all"
+                                                        >
+                                                            <FiEye className="w-4 h-4" />
+                                                        </Button>
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            onClick={() => handleDelete(brand.id)}
+                                                            className="w-9 h-9 rounded-xl hover:bg-red-500/10 hover:text-red-500 transition-all"
+                                                        >
+                                                            <FiTrash2 className="w-4 h-4" />
+                                                        </Button>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })
+                                )}
+                            </TableBody>
+                        </Table>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        {/* Page indicator */}
-                        <div className="hidden sm:flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
-                            <span className="text-xs text-gray-500 dark:text-gray-400">Halaman</span>
-                            <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{page}</span>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">dari</span>
-                            <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{Math.max(1, Math.ceil(filteredBrands.length / rowsPerPage))}</span>
-                        </div>
-
-                        <div className="flex items-center gap-1 bg-white dark:bg-gray-800 p-1 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                    {/* Pagination */}
+                    <div className="p-6 border-t border-gray-100 dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
+                        <p className="text-xs text-gray-500 font-medium">
+                            Menampilkan <span className="text-gray-900 dark:text-white">{(page - 1) * rowsPerPage + 1}</span> - <span className="text-gray-900 dark:text-white">{(page - 1) * rowsPerPage + paginatedBrands.length}</span> dari <span className="text-gray-900 dark:text-white">{filteredBrands.length}</span> brand
+                        </p>
+                        <div className="flex items-center gap-3">
                             <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
-                                onClick={() => setPage(p => Math.max(1, p - 1))}
                                 disabled={page === 1}
-                                className="h-9 px-3 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                                onClick={() => setPage(p => p - 1)}
+                                className="h-9 px-4 rounded-xl border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5 transition-all"
                             >
-                                <FiChevronLeft className="h-4 w-4 mr-1" />
-                                <span className="text-sm">Prev</span>
+                                Sebelumnya
                             </Button>
-                            <div className="w-px h-6 bg-gray-200 dark:bg-gray-700"></div>
+                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
+                                <span className="text-xs font-bold text-blue-500">{page}</span>
+                                <span className="text-[10px] text-gray-400">/</span>
+                                <span className="text-xs font-bold text-gray-500">{totalPage || 1}</span>
+                            </div>
                             <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
+                                disabled={page === totalPage || totalPage === 0}
                                 onClick={() => setPage(p => p + 1)}
-                                disabled={page * rowsPerPage >= filteredBrands.length}
-                                className="h-9 px-3 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                                className="h-9 px-4 rounded-xl border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5 transition-all"
                             >
-                                <span className="text-sm">Next</span>
-                                <FiChevronRight className="h-4 w-4 ml-1" />
+                                Berikutnya
                             </Button>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
             <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-                <DialogContent className="sm:max-w-[425px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-2xl rounded-2xl">
+                <DialogContent className="sm:max-w-md rounded-3xl border-white/10 bg-white/90 dark:bg-gray-900/95 backdrop-blur-xl">
                     <DialogHeader>
-                        <div className="flex items-center gap-4">
-                            <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
-                                <FiTrash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
+                        <DialogTitle className="flex items-center gap-3 text-xl font-black">
+                            <div className="p-2 rounded-lg bg-red-500/15 text-red-500">
+                                <FiTrash2 className="w-5 h-5" />
                             </div>
-                            <div className="space-y-1 text-left">
-                                <DialogTitle className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                                    Hapus Brand
-                                </DialogTitle>
-                                <DialogDescription className="text-gray-500 dark:text-gray-400">
-                                    Apakah Anda yakin ingin menghapus brand ini? Tindakan ini tidak dapat dibatalkan.
-                                </DialogDescription>
-                            </div>
-                        </div>
+                            Hapus Brand
+                        </DialogTitle>
                     </DialogHeader>
-                    <DialogFooter className="gap-2 sm:gap-0 mt-4">
-                        <Button
-                            variant="outline"
-                            onClick={() => setIsDeleteOpen(false)}
-                            className="w-full sm:w-auto rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 dark:border-gray-700 dark:text-gray-300"
-                        >
+                    <div className="py-6">
+                        <div className="p-4 rounded-2xl bg-red-500/5 border border-red-500/10 text-center">
+                            <p className="text-gray-900 dark:text-white font-bold">Apakah Anda yakin ingin menghapus brand ini?</p>
+                            <p className="text-sm text-gray-500 mt-2 leading-relaxed">
+                                Tindakan ini <span className="text-red-500 font-bold">permanen</span> dan data produk yang terhubung mungkin akan terpengaruh.
+                            </p>
+                        </div>
+                    </div>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button variant="outline" onClick={() => setIsDeleteOpen(false)} disabled={deleteMutation.isPending} className="flex-1 h-11 rounded-xl border-gray-200 dark:border-white/10 font-bold">
                             Batal
                         </Button>
                         <Button
                             variant="destructive"
                             onClick={confirmDelete}
-                            className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-500/20"
                             disabled={deleteMutation.isPending}
+                            className="flex-1 h-11 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold shadow-lg shadow-red-500/20 transition-all"
                         >
-                            {deleteMutation.isPending ? 'Menghapus...' : 'Hapus Brand'}
+                            {deleteMutation.isPending ? 'Menghapus...' : 'Ya, Hapus'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
 
+            {/* Modal Tambah/Edit Brand */}
             <Dialog open={open} onOpenChange={setOpen}>
-                <DialogContent className="sm:max-w-[640px] bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 shadow-2xl rounded-2xl">
-                    <DialogHeader className="pb-6 border-b border-gray-100 dark:border-gray-800">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2.5 bg-linear-to-br from-blue-500 to-indigo-500 rounded-xl shadow-lg shadow-blue-500/20">
-                                {editId ? <FiEdit2 className="h-5 w-5 text-white" /> : <FiPlus className="h-5 w-5 text-white" />}
+                <DialogContent className="sm:max-w-xl rounded-3xl border-white/10 bg-white/90 dark:bg-gray-900/95 backdrop-blur-xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-3 text-xl font-black">
+                            <div className={`p-2 rounded-lg ${editId ? 'bg-blue-500/15 text-blue-500' : 'bg-indigo-500/15 text-indigo-500'}`}>
+                                {editId ? <FiEdit2 className="w-5 h-5" /> : <FiPlus className="w-5 h-5" />}
                             </div>
-                            <div>
-                                <DialogTitle className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                                    {editId ? 'Edit Brand' : 'Tambah Brand Baru'}
-                                </DialogTitle>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                                    {editId ? 'Perbarui informasi brand' : 'Buat brand baru dengan lengkap'}
-                                </p>
-                            </div>
-                        </div>
+                            {editId ? 'Edit' : 'Tambah'} Brand
+                        </DialogTitle>
                     </DialogHeader>
-                    <form onSubmit={handleSave} className="space-y-5 pt-4">
-                        {formError && (
-                            <div className="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-300 p-4 rounded-xl text-sm">
-                                <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg shrink-0">
-                                    <FiX className="w-4 h-4 text-red-600 dark:text-red-400" />
-                                </div>
-                                <span>{formError}</span>
-                            </div>
-                        )}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-1.5">
-                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
-                                    <FiPackage className="h-3.5 w-3.5 text-blue-500" />
-                                    Nama Brand
-                                </label>
+
+                    <form onSubmit={handleSave} className="space-y-5 py-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div className="space-y-2">
+                                <label className="text-[10px] uppercase tracking-widest text-gray-400 font-black ml-1">Nama Brand</label>
                                 <Input
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    placeholder="Contoh: Mobile Legends"
-                                    className="border-gray-200 dark:border-gray-700 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500/20 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                                    value={name || ""}
+                                    onChange={e => setName(e.target.value)}
+                                    placeholder="e.g. Mobile Legends"
+                                    className="h-12 bg-gray-50 dark:bg-white/5 border-gray-100 dark:border-white/10 rounded-xl focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                                     required
                                 />
                             </div>
-                            <div className="space-y-1.5">
-                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
-                                    <FiTag className="h-3.5 w-3.5 text-blue-500" />
-                                    Kode Brand
-                                </label>
+                            <div className="space-y-2">
+                                <label className="text-[10px] uppercase tracking-widest text-gray-400 font-black ml-1">Kode Brand</label>
                                 <Input
-                                    value={brand}
-                                    onChange={(e) => setBrand(e.target.value)}
-                                    placeholder="Contoh: ml"
-                                    className="border-gray-200 dark:border-gray-700 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500/20 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                                    required
-                                />
-                            </div>
-                            <div className="space-y-1.5">
-                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
-                                    <svg className="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                    </svg>
-                                    Publisher
-                                </label>
-                                <Input
-                                    value={publisher}
-                                    onChange={(e) => setPublisher(e.target.value)}
-                                    placeholder="Contoh: Moonton"
-                                    className="border-gray-200 dark:border-gray-700 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500/20 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                                    value={brand || ""}
+                                    onChange={e => setBrand(e.target.value)}
+                                    placeholder="e.g. mlbb"
+                                    className="h-12 bg-gray-50 dark:bg-white/5 border-gray-100 dark:border-white/10 rounded-xl focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                                     required
                                 />
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-1.5">
-                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Kategori</label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div className="space-y-2">
+                                <label className="text-[10px] uppercase tracking-widest text-gray-400 font-black ml-1">Publisher</label>
+                                <Input
+                                    value={publisher || ""}
+                                    onChange={e => setPublisher(e.target.value)}
+                                    placeholder="e.g. Moonton"
+                                    className="h-12 bg-gray-50 dark:bg-white/5 border-gray-100 dark:border-white/10 rounded-xl focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] uppercase tracking-widest text-gray-400 font-black ml-1">Kategori</label>
                                 <select
                                     value={category}
-                                    onChange={(e) => setCategory(e.target.value)}
-                                    className="w-full p-3 border border-gray-200 dark:border-gray-700 rounded-xl focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500/20 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 transition-all duration-200"
+                                    onChange={e => setCategory(e.target.value)}
+                                    className="w-full h-12 px-4 bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden transition-all text-sm text-gray-900 dark:text-white appearance-none"
                                     required
-                                    disabled={isLoadingCategories}
                                 >
-                                    <option value="">Pilih Kategori</option>
-                                    {isLoadingPricingTiers ? (
-                                        <option value="" disabled>Memuat kategori...</option>
-                                    ) : categoriesError ? (
-                                        <option value="" disabled>Gagal memuat kategori</option>
-                                    ) : (
-                                        categories.map((cat) => (
-                                            <option key={cat.id} value={String(cat.id)}>
-                                                {cat.name}
-                                            </option>
-                                        ))
-                                    )}
+                                    <option value="" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Pilih Kategori</option>
+                                    {categories.map(cat => (
+                                        <option key={cat.id} value={String(cat.id)} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                                            {cat.name}
+                                        </option>
+                                    ))}
                                 </select>
+
+
                             </div>
-                            <div className="md:col-span-2 space-y-4 pt-2">
-                                <div className="space-y-3">
-                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
-                                        Metode Profit <span className="text-red-500">*</span>
-                                    </label>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div
-                                            onClick={() => setProfitMethod("FIXED")}
-                                            className={`cursor-pointer p-4 rounded-xl border-2 transition-all duration-200 flex items-center gap-3 ${profitMethod === "FIXED"
-                                                ? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/20"
-                                                : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
-                                                }`}
-                                        >
-                                            <div className={`shrink-0 rounded-full w-5 h-5 border-2 flex items-center justify-center ${profitMethod === "FIXED" ? "border-blue-500" : "border-gray-400"
-                                                }`}>
-                                                {profitMethod === "FIXED" && <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
-                                            </div>
-                                            <span className={`font-medium ${profitMethod === "FIXED" ? "text-blue-700 dark:text-blue-300" : "text-gray-600 dark:text-gray-400"
-                                                }`}>Harga Tetap</span>
-                                        </div>
-
-                                        <div
-                                            onClick={() => setProfitMethod("MARGIN")}
-                                            className={`cursor-pointer p-4 rounded-xl border-2 transition-all duration-200 flex items-center gap-3 ${profitMethod === "MARGIN"
-                                                ? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/20"
-                                                : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
-                                                }`}
-                                        >
-                                            <div className={`shrink-0 rounded-full w-5 h-5 border-2 flex items-center justify-center ${profitMethod === "MARGIN" ? "border-blue-500" : "border-gray-400"
-                                                }`}>
-                                                {profitMethod === "MARGIN" && <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
-                                            </div>
-                                            <span className={`font-medium ${profitMethod === "MARGIN" ? "text-blue-700 dark:text-blue-300" : "text-gray-600 dark:text-gray-400"
-                                                }`}>Gunakan Margin (%)</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-2">
-                                    <div
-                                        className={`w-5 h-5 rounded border flex items-center justify-center cursor-pointer transition-colors ${isManualProcess ? "bg-blue-500 border-blue-500" : "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-                                            }`}
-                                        onClick={() => setIsManualProcess(!isManualProcess)}
-                                    >
-                                        {isManualProcess && <FiCheckCircle className="text-white w-3.5 h-3.5" />}
-                                    </div>
-                                    <label
-                                        className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer select-none"
-                                        onClick={() => setIsManualProcess(!isManualProcess)}
-                                    >
-                                        Proses Manual
-                                    </label>
-                                    <div className="group relative">
-                                        <FiInfo className="w-4 h-4 text-gray-400 hover:text-blue-500 transition-colors cursor-help" />
-                                        <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 text-center">
-                                            Centang jika proses transaksi dilakukan secara manual
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700">
-                                    <div className="space-y-0.5">
-                                        <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Status Brand</label>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">Aktifkan atau nonaktifkan brand ini dari toko</p>
-                                    </div>
-                                    <Switch
-                                        checked={isActive}
-                                        onCheckedChange={setIsActive}
-                                    />
-                                </div>
-
-                                {/* {profitMethod === 'MARGIN' && (
-                                    <div className="grid grid-cols-1 gap-4 pt-2">
-                                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Konfigurasi Margin per Pricing Tier</label>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            {isLoadingPricingTiers ? (
-                                                <div className="text-sm text-gray-500">Memuat pricing tiers...</div>
-                                            ) : pricingTiers.map(tier => {
-                                                const currentMargin = margins.find(m => String(m.tierId) === String(tier.id))?.percentage || "";
-                                                return (
-                                                    <div key={tier.id} className="space-y-1.5">
-                                                        <label className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                                            Margin {tier.name} (%)
-                                                        </label>
-                                                        <Input
-                                                            type="number"
-                                                            value={currentMargin}
-                                                            onChange={(e) => {
-                                                                const val = e.target.value ? Number(e.target.value) : 0;
-                                                                setMargins(prev => {
-                                                                    const exists = prev.find(m => String(m.tierId) === String(tier.id));
-                                                                    if (exists) {
-                                                                        return prev.map(m => String(m.tierId) === String(tier.id) ? { ...m, percentage: val } : m);
-                                                                    }
-                                                                    return [...prev, { tierId: String(tier.id), percentage: val }];
-                                                                });
-                                                            }}
-                                                            placeholder="0"
-                                                            className="border-gray-200 dark:border-gray-700 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500/20 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                                                        />
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                )} */}
-                            </div>
-
                         </div>
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Logo URL (Opsional)</label>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] uppercase tracking-widest text-gray-400 font-black ml-1">Logo URL</label>
                             <Input
-                                value={logo}
-                                onChange={(e) => setLogo(e.target.value)}
+                                value={logo || ""}
+                                onChange={e => setLogo(e.target.value)}
                                 placeholder="https://example.com/logo.png"
-                                className="border-gray-200 dark:border-gray-700 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500/20 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                                className="h-12 bg-gray-50 dark:bg-white/5 border-gray-100 dark:border-white/10 rounded-xl focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                             />
-                            {logo && (
-                                <div className="mt-3 p-4 bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Pratinjau:</p>
-                                    <div className="flex items-center justify-center">
-                                        <div className="relative">
-                                            <div className="absolute -inset-1 bg-linear-to-r from-blue-500 to-indigo-500 rounded-xl blur opacity-30"></div>
-                                            <Image
-                                                src={logo}
-                                                alt="Logo preview"
-                                                width={80}
-                                                height={80}
-                                                className="relative h-20 w-20 object-contain rounded-xl bg-white dark:bg-gray-900 p-2"
-                                                onError={(e) => {
-                                                    const target = e.target as HTMLImageElement;
-                                                    target.src = 'https://upload.wikimedia.org/wikipedia/commons/4/48/BLANK_ICON.png';
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
                         </div>
-                        <div className="flex justify-end gap-3 pt-5 border-t border-gray-100 dark:border-gray-800">
+
+                        <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-xs font-bold text-gray-700 dark:text-white">Proses Manual</p>
+                                    <p className="text-[10px] text-gray-400">Centang jika transaksi diproses manual</p>
+                                </div>
+                                <Switch checked={isManualProcess} onCheckedChange={setIsManualProcess} />
+                            </div>
+                            <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-white/5">
+                                <div>
+                                    <p className="text-xs font-bold text-gray-700 dark:text-white">Status Aktif</p>
+                                    <p className="text-[10px] text-gray-400">Aktifkan brand di halaman publik</p>
+                                </div>
+                                <Switch checked={isActive} onCheckedChange={setIsActive} />
+                            </div>
+                        </div>
+
+                        {formError && (
+                            <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold animate-shake">
+                                <FiActivity className="w-4 h-4" />
+                                {formError}
+                            </div>
+                        )}
+
+                        <DialogFooter className="gap-2 sm:gap-0 pt-4">
                             <Button
                                 type="button"
                                 variant="outline"
                                 onClick={() => setOpen(false)}
-                                className="px-5 py-2.5 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl font-medium transition-all duration-200"
+                                disabled={createMutation.isPending || updateMutation.isPending}
+                                className="flex-1 h-11 rounded-xl border-gray-200 dark:border-white/10 font-bold"
                             >
                                 Batal
                             </Button>
                             <Button
                                 type="submit"
-                                disabled={isLoading}
-                                className="px-6 py-2.5 bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-medium shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled={createMutation.isPending || updateMutation.isPending}
+                                className="flex-1 h-11 rounded-xl bg-linear-to-r from-blue-500 to-indigo-500 text-white font-bold shadow-lg shadow-blue-500/20 hover:opacity-90 disabled:opacity-50 transition-all"
                             >
-                                {isLoading ? (
-                                    <div className="flex items-center gap-2">
-                                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                {createMutation.isPending || updateMutation.isPending ? (
+                                    <>
+                                        <FiLoader className="animate-spin mr-2" />
                                         Menyimpan...
-                                    </div>
-                                ) : (
-                                    <span className="flex items-center gap-2">
-                                        <HiOutlineSparkles className="h-4 w-4" />
-                                        {editId ? 'Simpan Perubahan' : 'Tambah Brand'}
-                                    </span>
-                                )}
+                                    </>
+                                ) : 'Simpan Brand'}
                             </Button>
-                        </div>
+                        </DialogFooter>
                     </form>
                 </DialogContent>
             </Dialog>
 
-            {/* Detail Brand Dialog */}
-            <Dialog open={!!detailId} onOpenChange={(open) => { if (!open) setDetailId(null); }}>
-                <DialogContent className="sm:max-w-[520px] bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 shadow-2xl rounded-2xl">
-                    <DialogHeader className="pb-4">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2.5 bg-linear-to-br from-blue-500 to-indigo-500 rounded-xl shadow-lg shadow-blue-500/20">
-                                <FiEye className="h-5 w-5 text-white" />
+            {/* Modal Detail Brand */}
+            <Dialog open={!!detailId} onOpenChange={() => setDetailId(null)}>
+                <DialogContent className="sm:max-w-md rounded-3xl border-white/10 bg-white/90 dark:bg-gray-900/95 backdrop-blur-xl">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-3 text-xl font-black">
+                            <div className="p-2 rounded-lg bg-indigo-500/15 text-indigo-500">
+                                <FiEye className="w-5 h-5" />
                             </div>
-                            <DialogTitle className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                                Detail Brand
-                            </DialogTitle>
-                        </div>
+                            Detail Brand
+                        </DialogTitle>
                     </DialogHeader>
                     {detailBrand && (
-                        <div className="space-y-5">
-                            {/* Brand Header Card */}
-                            <div className="relative overflow-hidden rounded-xl">
-                                <div className="absolute inset-0 bg-linear-to-br from-blue-600 via-blue-700 to-indigo-700"></div>
-                                <div className="relative p-5 flex items-center gap-4">
-                                    <div className="relative">
-                                        {detailBrand.logo ? (
-                                            <>
-                                                <div className="absolute -inset-1 bg-white/30 rounded-xl blur"></div>
-                                                <Image
-                                                    src={detailBrand.logo}
-                                                    alt={detailBrand.name}
-                                                    width={72}
-                                                    height={72}
-                                                    className="relative h-18 w-18 object-contain rounded-xl bg-white p-2 shadow-lg"
-                                                />
-                                            </>
-                                        ) : (
-                                            <div className="h-18 w-18 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
-                                                <FiPackage className="h-8 w-8 text-white" />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="flex-1">
-                                        <h3 className="text-xl font-bold text-white">{detailBrand.name}</h3>
-                                        <div className="mt-1 inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/20 backdrop-blur-sm rounded-lg">
-                                            <code className="text-xs font-mono text-white">{detailBrand.code}</code>
+                        <div className="space-y-6 py-4">
+                            <div className="flex items-center gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
+                                <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-white p-2 border border-gray-100 dark:border-white/10">
+                                    {detailBrand.logo ? (
+                                        <Image src={detailBrand.logo} alt={detailBrand.name} fill className="object-contain" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                                            <FiBox className="text-2xl text-gray-400" />
                                         </div>
-                                    </div>
+                                    )}
+                                </div>
+                                <div>
+                                    <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-0.5">Nama Brand</p>
+                                    <p className="text-xl font-black text-gray-900 dark:text-white">{detailBrand.name}</p>
+                                    <p className="text-xs font-mono text-blue-500">{detailBrand.code}</p>
                                 </div>
                             </div>
 
-                            {/* Info Cards */}
-                            <div className="grid grid-cols-1 gap-3">
-                                <div className="flex items-center gap-3 p-4 bg-linear-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-100 dark:border-blue-800/50">
-                                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                                        <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wider">Publisher</p>
-                                        <p className="font-semibold text-gray-900 dark:text-gray-100">{getPublisherName(detailBrand.publisher)}</p>
-                                    </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/10">
+                                    <p className="text-[10px] uppercase tracking-widest text-blue-400 font-bold mb-1">Kategori</p>
+                                    <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                                        {resolveCategoryName(detailBrand.category as any, (detailBrand as any).categoryId, categories)}
+                                    </p>
                                 </div>
-                                <div className="flex items-center gap-3 p-4 bg-linear-to-r from-sky-50 to-indigo-50 dark:from-sky-900/20 dark:to-indigo-900/20 rounded-xl border border-sky-100 dark:border-sky-800/50">
-                                    <div className="p-2 bg-sky-100 dark:bg-sky-900/30 rounded-lg">
-                                        <FiLayers className="w-4 h-4 text-sky-600 dark:text-sky-400" />
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-medium text-sky-600 dark:text-sky-400 uppercase tracking-wider mb-1">Tipe</p>
-                                        {detailBrand.types && detailBrand.types.length > 0 ? (
-                                            <div className="flex flex-wrap gap-1.5">
-                                                {detailBrand.types.map(t => (
-                                                    <span key={t.id} className="inline-flex items-center px-2 py-1 text-[11px] font-semibold rounded-md bg-white/50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300 border border-sky-200/50 dark:border-sky-700/50">
-                                                        {t.name}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <p className="font-semibold text-gray-900 dark:text-gray-100">Belum ada tipe</p>
-                                        )}
-                                    </div>
+                                <div className="p-4 rounded-2xl bg-indigo-500/5 border border-indigo-500/10">
+                                    <p className="text-[10px] uppercase tracking-widest text-indigo-400 font-bold mb-1">Publisher</p>
+                                    <p className="text-sm font-bold text-gray-700 dark:text-gray-300">{getPublisherName(detailBrand.publisher)}</p>
                                 </div>
-                                <div className="flex items-center gap-3 p-4 bg-linear-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800/50">
-                                    <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                                        <FiTag className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Kategori</p>
-                                        <p className="font-semibold text-gray-900 dark:text-gray-100">{resolveCategoryName(detailBrand.category as string | CategoryObject | undefined, (detailBrand as BrandWithCategoryId).categoryId, categories)}</p>
-                                    </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10">
+                                    <p className="text-[10px] uppercase tracking-widest text-emerald-400 font-bold mb-1">Total Produk</p>
+                                    <p className="text-2xl font-black text-emerald-500">{detailBrand._count?.products || 0}</p>
+                                </div>
+                                <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10">
+                                    <p className="text-[10px] uppercase tracking-widest text-amber-400 font-bold mb-1">Tipe Produk</p>
+                                    <p className="text-2xl font-black text-amber-500">{detailBrand._count?.types || 0}</p>
                                 </div>
                             </div>
                         </div>
                     )}
+                    <DialogFooter>
+                        <Button onClick={() => setDetailId(null)} className="w-full h-11 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold hover:opacity-90 transition-opacity">
+                            Tutup
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
+
         </div >
     );
 }

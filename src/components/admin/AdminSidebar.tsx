@@ -7,19 +7,19 @@ import { FiHome, FiBarChart2, FiUsers, FiBox, FiFileText, FiSettings, FiLayers, 
 
 const navItems = [
   { name: "Dashboard", href: "/admin/dashboard", icon: FiHome },
-  { name: "Category", href: "/admin/category", icon: FiLayers },
-  { name: "Brands", href: "/admin/brands", icon: FiTag },
-  { name: "Types", href: "/admin/types", icon: FiLayers },
-  { name: "Users", href: "/admin/customers", icon: FiUsers },
-  { name: "Products", href: "/admin/products", icon: FiBox },
-  { name: "Top Ups", href: "/admin/topups", icon: FiDollarSign },
+  { name: "Kategori", href: "/admin/category", icon: FiLayers },
+  { name: "Brand", href: "/admin/brands", icon: FiTag },
+  { name: "Tipe", href: "/admin/types", icon: FiLayers },
+  { name: "Pengguna", href: "/admin/customers", icon: FiUsers },
+  { name: "Produk", href: "/admin/products", icon: FiBox },
+  { name: "Top Up", href: "/admin/topups", icon: FiDollarSign },
   {
-    name: "Transactions",
+    name: "Transaksi",
     href: "/admin/transactions",
     icon: FiBarChart2,
   },
-  { name: "Reports", href: "/admin/reports", icon: FiFileText },
-  { name: "Settings", href: "/admin/settings", icon: FiSettings },
+  { name: "Laporan", href: "/admin/reports", icon: FiFileText },
+  { name: "Pengaturan", href: "/admin/settings", icon: FiSettings },
 ];
 
 function NavItem({ item, pathname }: { item: typeof navItems[0], pathname: string | null }) {
@@ -61,7 +61,7 @@ export default function AdminSidebar() {
             <h1 className="text-lg font-bold bg-linear-to-r from-blue-600 to-sky-500 bg-clip-text text-transparent">
               Staz Store
             </h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Admin Panel</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Panel Admin</p>
           </div>
         </div>
       </div>

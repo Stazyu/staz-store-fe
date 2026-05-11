@@ -128,7 +128,7 @@ function DashboardError({ message, onRetry }: { message: string; onRetry: () => 
       <p className="text-xs text-gray-500 dark:text-gray-400 max-w-sm text-center">{message}</p>
       <Button onClick={onRetry} className="mt-2 bg-red-600 hover:bg-red-500 text-white flex items-center gap-2">
         <FiRefreshCw className="w-4 h-4" />
-        Retry
+        Muat Ulang
       </Button>
     </div>
   );
@@ -141,14 +141,14 @@ export default function DashboardMain() {
   const [period, setPeriod] = useState<string>("month");
   const isDark = theme === "dark";
 
-  const { 
-    data: dashboardData, 
-    isLoading, 
-    isError, 
-    error, 
-    refetch, 
+  const {
+    data: dashboardData,
+    isLoading,
+    isError,
+    error,
+    refetch,
     isFetching,
-    isPlaceholderData 
+    isPlaceholderData
   } = useAdminDashboardQuery(period);
 
   const gridStroke = isDark ? "#ffffff08" : "#00000008";
@@ -214,7 +214,7 @@ export default function DashboardMain() {
           <div>
             <div className="flex items-center gap-3 mb-3">
               <LiveDot />
-              <span className="text-xs font-semibold text-emerald-400 uppercase tracking-widest">Live Analytics</span>
+              <span className="text-xs font-semibold text-emerald-400 uppercase tracking-widest">Analitik Live</span>
             </div>
             <h1 className="text-4xl md:text-5xl font-black text-white leading-none tracking-tight">
               Dashboard
@@ -234,14 +234,14 @@ export default function DashboardMain() {
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-medium border border-white/10 backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 group disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <FiRefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : "transition-transform duration-500"}`} />
-              Refresh
+              Segarkan
             </button>
             <button
               onClick={handleExport}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-linear-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 text-white text-sm font-medium shadow-lg shadow-blue-500/30 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
             >
               <FiDownload className="w-4 h-4" />
-              Export
+              Ekspor
             </button>
           </div>
         </div>
@@ -388,11 +388,11 @@ export default function DashboardMain() {
         {/* Category Distribution */}
         <div className="rounded-2xl border border-gray-200/50 dark:border-white/5 bg-white dark:bg-gray-900/60 backdrop-blur-sm shadow-xl overflow-hidden">
           <div className="p-6 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
-            <SectionHeader 
-              icon={FiGrid} 
-              title="Distribusi Kategori" 
-              sub={`Total ${totalCategoryTransactions.toLocaleString("id-ID")} transaksi - ${period === 'day' ? 'Hari Ini' : period === 'week' ? '7 Hari Terakhir' : '30 Hari Terakhir'}`} 
-              color="bg-emerald-500/15 text-emerald-500" 
+            <SectionHeader
+              icon={FiGrid}
+              title="Distribusi Kategori"
+              sub={`Total ${totalCategoryTransactions.toLocaleString("id-ID")} transaksi - ${period === 'day' ? 'Hari Ini' : period === 'week' ? '7 Hari Terakhir' : '30 Hari Terakhir'}`}
+              color="bg-emerald-500/15 text-emerald-500"
             />
             <Select value={period} onValueChange={setPeriod}>
               <SelectTrigger className="w-[130px] h-9 bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-white/10">

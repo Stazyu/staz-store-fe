@@ -50,66 +50,38 @@ export default function TypeForm({ open, onOpenChange, initialData }: TypeFormPr
             toast.error('Harap lengkapi semua field');
             return;
         }
-
-        const payload = {
-            name,
-            prefix,
-            brandId,
-        };
+        const payload = { name, prefix, brandId };
 
         if (initialData) {
-            updateMutation.mutate(
-                { id: initialData.id, data: payload },
-                {
-                    onSuccess: () => {
-                        toast.success('Tipe berhasil diperbarui');
-                        onOpenChange(false);
-                    },
-                    onError: (error) => {
-                        toast.error(error.message || 'Gagal memperbarui tipe');
-                    }
-                }
-            );
+            updateMutation.mutate({ id: initialData.id, data: payload }, {
+                onSuccess: () => { toast.success('Tipe berhasil diperbarui'); onOpenChange(false); },
+                onError: (err) => { toast.error(err.message || 'Gagal memperbarui tipe'); }
+            });
         } else {
             createMutation.mutate(payload, {
-                onSuccess: () => {
-                    toast.success('Tipe berhasil ditambahkan');
-                    onOpenChange(false);
-                },
-                onError: (error) => {
-                    toast.error(error.message || 'Gagal menambahkan tipe');
-                }
+                onSuccess: () => { toast.success('Tipe berhasil ditambahkan'); onOpenChange(false); },
+                onError: (err) => { toast.error(err.message || 'Gagal menambahkan tipe'); }
             });
         }
     };
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>
+            <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle>{initialData ? 'Edit' : 'Tambah'} Tipe</DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Nama Tipe</label>
-                        <Input
-                            value={name}
-                            onChange={e => setName(e.target.value)}
-                            placeholder="Contoh: Umum, Membership"
-                            disabled={isSubmitting}
-                        />
+                <div className="space-y-4 py-2">
+                    <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Nama Tipe</label>
+                        <Input value={name} onChange={e => setName(e.target.value)} placeholder="Contoh: Umum, Membership" disabled={isSubmitting} />
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">SKU Code (Prefix)</label>
-                        <Input
-                            value={prefix}
-                            onChange={e => setPrefix(e.target.value)}
-                            placeholder="Contoh: mlbb_dm"
-                            disabled={isSubmitting}
-                        />
+                    <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">SKU Code (Prefix)</label>
+                        <Input value={prefix} onChange={e => setPrefix(e.target.value)} placeholder="Contoh: mlbb_dm" disabled={isSubmitting} />
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Brand</label>
+                    <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Brand</label>
                         <select
                             value={brandId}
                             onChange={e => setBrandId(e.target.value)}
@@ -122,27 +94,13 @@ export default function TypeForm({ open, onOpenChange, initialData }: TypeFormPr
                             ))}
                         </select>
                     </div>
-                    <DialogFooter>
-                        <Button
-                            variant="outline"
-                            onClick={() => onOpenChange(false)}
-                            disabled={isSubmitting}
-                        >
-                            Batal
-                        </Button>
-                        <Button
-                            onClick={handleSave}
-                            disabled={isSubmitting}
-                        >
-                            {isSubmitting ? (
-                                <>
-                                    <FiLoader className="animate-spin mr-2" />
-                                    Menyimpan...
-                                </>
-                            ) : 'Simpan'}
-                        </Button>
-                    </DialogFooter>
                 </div>
+                <DialogFooter className="gap-2">
+                    <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>Batal</Button>
+                    <Button onClick={handleSave} disabled={isSubmitting}>
+                        {isSubmitting ? <><FiLoader className="animate-spin mr-1.5" /> Menyimpan...</> : 'Simpan'}
+                    </Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     );

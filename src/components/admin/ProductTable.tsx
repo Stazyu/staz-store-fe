@@ -479,7 +479,7 @@ function ProductTableInner() {
                                         Kelola Produk
                                     </h1>
                                     <p className="text-teal-100 text-base mt-1">
-                                        Kelola dan pantau semua produk digital
+                                        Kelola dan pantau semua produk digital Anda
                                     </p>
                                 </div>
                             </div>
@@ -700,7 +700,7 @@ function ProductTableInner() {
                                     onClick={() => setSort('stock')}
                                 >
                                     <div className="flex items-center justify-center gap-1.5">
-                                        Stock
+                                        Stok
                                         <SortIcon field="stock" />
                                     </div>
                                 </TableHead>
@@ -763,7 +763,7 @@ function ProductTableInner() {
                                                         {tierCount > 0 && (
                                                             <div className="flex items-center justify-end gap-1 mt-0.5">
                                                                 <FiDollarSign className="h-2.5 w-2.5 text-blue-500" />
-                                                                <span className="text-[10px] text-blue-500 font-medium">{tierCount} tier{tierCount > 1 ? 's' : ''}</span>
+                                                                <span className="text-[10px] text-blue-500 font-medium">{tierCount} tier</span>
                                                             </div>
                                                         )}
                                                     </div>
