@@ -1,4 +1,4 @@
-import { PaymentMethodCategory } from './paymentMethod';
+import { PaymentMethodCategory } from './paymentMethod.types';
 
 export interface PurchaseFooterProps {
     isMobile: boolean;

@@ -11,8 +11,8 @@ import PurchaseFooter from '@/components/purchase/PurchaseFooter';
 // import PaymentAccording from '@/components/PaymentAccording';
 
 // Types
-import { PaymentMethod } from '@/types/paymentMethod';
-import { TopUpCardProps } from '@/types/topUpCard';
+import { PaymentMethod } from '@/types/paymentMethod.types';
+import { TopUpCardProps } from '@/types/topUpCard.types';
 
 interface PurchaseFormProps {
   selectedOption: TopUpCardProps['option'];

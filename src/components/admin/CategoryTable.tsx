@@ -19,7 +19,7 @@ import {
     ResponsiveContainer, Cell, TooltipProps 
 } from "recharts";
 import { fetchCategories, createCategory, updateCategory, deleteCategory } from "@/services/category.client";
-import { Category, CreateCategoryDto } from "@/types/category";
+import { Category, CreateCategoryDto } from "@/types/category.types";
 
 /* ─── Helpers ───────────────────────────────────────────────────────────── */
 function LiveDot() {

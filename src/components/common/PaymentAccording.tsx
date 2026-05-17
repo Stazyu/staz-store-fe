@@ -2,7 +2,7 @@
 
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react';
 import { ChevronUpIcon } from '@heroicons/react/20/solid';
-import { PaymentMethodCategory } from '@/types/paymentMethod';
+import { PaymentMethodCategory } from '@/types/paymentMethod.types';
 
 export default function PaymentAccordion({
     groupedMethods,

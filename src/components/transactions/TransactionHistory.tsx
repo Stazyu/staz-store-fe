@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { dummyTransactions } from '@/constants/transactions';
-import { TransactionItem } from '@/types/transaction';
+import { dummyTransactions } from '@/data/transactions';
+import { TransactionItem } from '@/types/transaction.types';
 import { FiChevronDown, FiChevronUp, FiInfo, FiCheckCircle, FiClock, FiXCircle } from 'react-icons/fi';
 
 const statusStyles = {

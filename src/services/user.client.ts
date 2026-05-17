@@ -1,4 +1,4 @@
-import { User, UpdateUserDto, ApiResponse } from '@/types/user';
+import { User, UpdateUserDto, ApiResponse } from '@/types/user.types';
 import { fetchWithJwt } from '@/lib/api-client';
 
 const API_BASE_URL = process.env.NODE_ENV === 'production'

@@ -1,4 +1,4 @@
-import { TransactionItem } from "@/types/transaction";
+import { TransactionItem } from "@/types/transaction.types";
 
 export const dummyTransactions: TransactionItem[] = [
   {

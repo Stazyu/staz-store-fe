@@ -1,4 +1,4 @@
-﻿import { PaymentMethod, PaymentMethodCategory } from "@/types/paymentMethod";
+import { PaymentMethod, PaymentMethodCategory } from "@/types/paymentMethod.types";
 
 // Individual payment methods
 const PAYMENT_METHODS_DATA: PaymentMethod[] = [

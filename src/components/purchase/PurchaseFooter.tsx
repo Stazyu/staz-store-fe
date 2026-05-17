@@ -1,5 +1,5 @@
-import { PaymentMethod, PaymentMethodCategory } from "@/types/paymentMethod";
-import { PurchaseFooterProps } from "@/types/purchase";
+import { PaymentMethod, PaymentMethodCategory } from "@/types/paymentMethod.types";
+import { PurchaseFooterProps } from "@/types/purchase.types";
 
 // Type guard to check if an item is a PaymentMethodCategory
 function isPaymentMethodCategory(item: unknown): item is PaymentMethodCategory {

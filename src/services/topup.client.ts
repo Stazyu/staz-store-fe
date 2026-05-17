@@ -1,5 +1,5 @@
 import { fetchWithJwt } from '@/lib/api-client';
-import { TopupInvoice, CreateInvoiceDto, DirectAdjustmentDto, BalanceResponse, AdminInvoicesParams, AdminInvoicesResponse } from '@/types/topup';
+import { TopupInvoice, CreateInvoiceDto, DirectAdjustmentDto, BalanceResponse, AdminInvoicesParams, AdminInvoicesResponse } from '@/types/topup.types';
 
 const API_BASE_URL = process.env.NODE_ENV === 'production'
     ? '/api/v1/topups'

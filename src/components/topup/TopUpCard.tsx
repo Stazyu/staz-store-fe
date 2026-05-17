@@ -1,4 +1,4 @@
-import { TopUpCardProps } from '@/types/topUpCard';
+import { TopUpCardProps } from '@/types/topUpCard.types';
 import React from 'react';
 
 const currencyLabels = {

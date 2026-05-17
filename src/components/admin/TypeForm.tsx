@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FiLoader } from "react-icons/fi";
-import { useCreateType, useUpdateType } from "@/hooks/use-types";
+import { useCreateType, useUpdateType } from "@/hooks/useTypes";
 import { fetchBrands } from "@/services/brand.client";
 import { useQuery } from "@tanstack/react-query";
 import { TypeItem } from "@/types/type.types";

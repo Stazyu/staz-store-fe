@@ -1,5 +1,5 @@
 import GameCard from '../home/GameCard';
-import { gamesList, voucherList } from '@/constants/games';
+import { gamesList, voucherList } from '@/data/games';
 
 export default function HeroSection() {
   return (

@@ -1,4 +1,4 @@
-import { Category, CreateCategoryDto, ApiResponse, CategoryListResponse, CategoryByIdResponse } from '@/types/category';
+import { Category, CreateCategoryDto, ApiResponse, CategoryListResponse, CategoryByIdResponse } from '@/types/category.types';
 import { fetchWithJwt } from '@/lib/api-client';
 
 const API_BASE_URL = process.env.NODE_ENV === 'production'

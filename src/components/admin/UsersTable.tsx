@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { FiEye, FiEdit2, FiUserX, FiUserCheck, FiSearch, FiRefreshCw, FiChevronUp, FiChevronDown, FiChevronsLeft, FiChevronLeft, FiChevronRight, FiChevronsRight, FiMail, FiPhone, FiCalendar, FiShoppingBag, FiClock, FiAlertTriangle } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 
-import { User, UpdateUserDto, Role } from "@/types/user";
+import { User, UpdateUserDto, Role } from "@/types/user.types";
 import { fetchUsers, updateUser } from "@/services/user.client";
 import { fetchPricingTiers } from "@/services/pricingTier.client";
 

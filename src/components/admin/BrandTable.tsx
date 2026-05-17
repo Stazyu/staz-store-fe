@@ -14,7 +14,7 @@ const getPublisherName = (publisher: string | PublisherObject): string => {
 import { fetchBrands, createBrand, updateBrand, deleteBrand, Brand, CategoryObject, PublisherObject } from "@/services/brand.client";
 import { fetchCategories } from "@/services/category.client";
 import { fetchPricingTiers } from "@/services/pricingTier.client";
-import { Category } from "@/types/category";
+import { Category } from "@/types/category.types";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";

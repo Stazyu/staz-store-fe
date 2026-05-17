@@ -9,11 +9,11 @@ import authClient from '@/lib/auth-client';
 import TopUpCard from '@/components/topup/TopUpCard';
 import OrderProcessingModal from '@/components/forms/OrderProcessingModal';
 import ConfirmationModal from '@/components/topup/ConfirmationModal';
-import { getGameById, voucherList } from '@/constants/games';
-import { Game } from '@/types/product';
-import { TopUpCardProps } from '@/types/topUpCard';
+import { getGameById, voucherList } from '@/data/games';
+import { Game } from '@/types/game.types';
+import { TopUpCardProps } from '@/types/topUpCard.types';
 import { PAYMENT_METHOD_CATEGORIES, PAYMENT_METHODS } from '@/constants/paymentMethods';
-import { DUMMY_PROMO_CODES } from '@/constants/promoCodes';
+import { DUMMY_PROMO_CODES } from '@/data/promoCodes';
 import toast from 'react-hot-toast';
 
 // New Components

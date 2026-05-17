@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { PaymentMethod, PaymentMethodCategory } from '@/types/paymentMethod';
+import { PaymentMethod, PaymentMethodCategory } from '@/types/paymentMethod.types';
 
 interface PaymentMethodSelectionProps {
     availableMethods: PaymentMethodCategory[];

@@ -1,6 +1,6 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { getAdminDashboard } from "@/services/dashboard.client";
-import type { DashboardPayload } from "@/types/dashboard";
+import type { DashboardPayload } from "@/types/dashboard.types";
 
 export function useAdminDashboardQuery(period: string = 'month') {
     return useQuery<DashboardPayload, Error>({

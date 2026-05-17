@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Image from "next/image";
-import { ProductCardProps } from "@/types/product";
+import { ProductCardProps } from "@/types/game.types";
 import PurchaseForm from "@/components/forms/PurchaseForm";
 
 interface PurchaseFormSubmitData {

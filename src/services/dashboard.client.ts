@@ -1,5 +1,5 @@
 import { fetchWithJwt } from "@/lib/api-client";
-import type { DashboardPayload, TransactionStatusItem, TransactionStatusRaw } from "@/types/dashboard";
+import type { DashboardPayload, TransactionStatusItem, TransactionStatusRaw } from "@/types/dashboard.types";
 
 const API_BASE_URL = process.env.NODE_ENV === 'production'
     ? '/api/v1/admin/dashboard'
