@@ -144,6 +144,7 @@ export default function BrandTable() {
     const [category, setCategory] = useState("");
     const [publisher, setPublisher] = useState("");
     const [logo, setLogo] = useState("");
+    const [sortOrder, setSortOrder] = useState<number | null>(null);
     const [profitMethod, setProfitMethod] = useState("MARGIN");
     const [margins, setMargins] = useState<{ tierId: string, percentage: number }[]>([]);
     const [isManualProcess, setIsManualProcess] = useState(false);
@@ -325,6 +326,7 @@ export default function BrandTable() {
         }
         setPublisher(getPublisherName(brandItem.publisher));
         setLogo(brandItem.logo || "");
+        setSortOrder(brandItem.sortOrder ?? null);
         setProfitMethod(brandItem.profitMethod || "MARGIN");
         setMargins(brandItem.margins || []);
         setIsManualProcess(brandItem.isManualProcess || false);
@@ -340,6 +342,7 @@ export default function BrandTable() {
         setCategory("");
         setPublisher("");
         setLogo("");
+        setSortOrder(null);
         setProfitMethod("MARGIN");
         setMargins([]);
         setIsManualProcess(false);
@@ -362,6 +365,7 @@ export default function BrandTable() {
                         categoryId: category || undefined,
                         publisher,
                         logo: logo || undefined,
+                        sortOrder: sortOrder,
                         profitMethod,
                         margins: profitMethod === 'MARGIN' ? margins : undefined,
                         isManualProcess,
@@ -377,6 +381,7 @@ export default function BrandTable() {
                     categoryId: category, // category holds selected categoryId
                     publisher: publisher || "-",
                     logo: logo || undefined,
+                    sortOrder: sortOrder,
                     profitMethod,
                     margins: profitMethod === 'MARGIN' ? margins : undefined,
                     isManualProcess,
@@ -828,6 +833,22 @@ export default function BrandTable() {
                             />
                         </div>
 
+                        <div className="space-y-2">
+                            <label className="text-[10px] uppercase tracking-widest text-gray-400 font-black ml-1">Urutan / Prioritas (Optional)</label>
+                            <Input
+                                type="number"
+                                min={0}
+                                value={sortOrder ?? ''}
+                                onChange={e => {
+                                    const val = e.target.value;
+                                    setSortOrder(val === '' ? null : parseInt(val, 10));
+                                }}
+                                placeholder="e.g. 1 (semakin kecil semakin atas)"
+                                className="h-12 bg-gray-50 dark:bg-white/5 border-gray-100 dark:border-white/10 rounded-xl focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                            />
+                            <p className="text-[10px] text-gray-400 ml-1">Angka kecil tampil lebih atas di Telegram Bot. Kosongkan jika tidak perlu prioritas.</p>
+                        </div>
+
                         <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 space-y-4">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -931,6 +952,13 @@ export default function BrandTable() {
                                     <p className="text-[10px] uppercase tracking-widest text-amber-400 font-bold mb-1">Tipe Produk</p>
                                     <p className="text-2xl font-black text-amber-500">{detailBrand._count?.types || 0}</p>
                                 </div>
+                            </div>
+
+                            <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
+                                <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-1">Urutan Prioritas</p>
+                                <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                                    {detailBrand.sortOrder != null ? `#${detailBrand.sortOrder}` : 'Tidak diatur'}
+                                </p>
                             </div>
                         </div>
                     )}

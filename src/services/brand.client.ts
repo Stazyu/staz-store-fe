@@ -38,6 +38,7 @@ export interface Brand {
     margins?: BrandMargin[];
     isManualProcess?: boolean;
     isActive?: boolean;
+    sortOrder?: number | null;
     topLevelCategory?: boolean;
     types?: BrandType[];
     _count?: {

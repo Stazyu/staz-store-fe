@@ -2,6 +2,7 @@ export interface Category {
     id: string;
     name: string;
     displayName?: string;
+    sortOrder?: number | null;
     brandCount: number;
     color?: string;
     icon?: string;
@@ -13,6 +14,7 @@ export interface Category {
 export interface CreateCategoryDto {
     name: string;
     displayName?: string;
+    sortOrder?: number | null;
 }
 
 export type CategoryListResponse = {

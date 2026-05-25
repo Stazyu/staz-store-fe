@@ -70,6 +70,7 @@ export default function CategoryTable() {
     const [detailId, setDetailId] = useState<string | null>(null);
     const [name, setName] = useState("");
     const [displayName, setDisplayName] = useState<null | string>(null);
+    const [sortOrder, setSortOrder] = useState<number | null>(null);
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -150,6 +151,7 @@ export default function CategoryTable() {
         setEditId(cat.id);
         setName(cat.name);
         setDisplayName(cat.displayName || "");
+        setSortOrder(cat.sortOrder ?? null);
         setFormError(null);
         setOpen(true);
     };
@@ -158,6 +160,7 @@ export default function CategoryTable() {
         setEditId(null);
         setName("");
         setDisplayName("");
+        setSortOrder(null);
         setFormError(null);
         setOpen(true);
     };
@@ -168,6 +171,7 @@ export default function CategoryTable() {
         const payload = {
             name,
             displayName: displayName?.trim() || undefined,
+            sortOrder: sortOrder,
         };
 
         if (editId) {
@@ -271,8 +275,8 @@ export default function CategoryTable() {
                             </div>
                         </div>
                     </div>
-                    <div className="p-6 flex-1 min-h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
+                    <div className="p-6 flex-1" style={{ minHeight: 300 }}>
+                        <ResponsiveContainer width="100%" height={300} minWidth={0}>
                             <BarChart data={chartData} layout="vertical" margin={{ left: -20, right: 20 }}>
                                 <defs>
                                     <linearGradient id="barGrad" x1="0" y1="0" x2="1" y2="0">
@@ -332,6 +336,7 @@ export default function CategoryTable() {
                                 <TableRow className="hover:bg-transparent border-gray-100 dark:border-white/5">
                                     <TableHead className="w-16 text-center font-bold text-xs uppercase tracking-wider">No</TableHead>
                                     <TableHead className="font-bold text-xs uppercase tracking-wider">Nama Kategori</TableHead>
+                                    <TableHead className="text-center font-bold text-xs uppercase tracking-wider">Urutan</TableHead>
                                     <TableHead className="text-center font-bold text-xs uppercase tracking-wider">Total Brand</TableHead>
                                     <TableHead className="text-right font-bold text-xs uppercase tracking-wider pr-8">Aksi</TableHead>
                                 </TableRow>
@@ -339,7 +344,7 @@ export default function CategoryTable() {
                             <TableBody>
                                 {isLoading ? (
                                     <TableRow>
-                                        <TableCell colSpan={4} className="h-64 text-center">
+                                        <TableCell colSpan={5} className="h-64 text-center">
                                             <div className="flex flex-col items-center gap-3">
                                                 <FiLoader className="animate-spin text-3xl text-emerald-500" />
                                                 <p className="text-sm text-gray-500 font-medium">Memuat data...</p>
@@ -348,7 +353,7 @@ export default function CategoryTable() {
                                     </TableRow>
                                 ) : paginated.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={4} className="h-64 text-center">
+                                        <TableCell colSpan={5} className="h-64 text-center">
                                             <div className="flex flex-col items-center gap-3">
                                                 <div className="p-4 rounded-full bg-gray-100 dark:bg-white/5">
                                                     <FiGrid className="text-3xl text-gray-300" />
@@ -368,6 +373,15 @@ export default function CategoryTable() {
                                                     <p className="font-bold text-gray-900 dark:text-white group-hover:text-emerald-500 transition-colors">{cat.name}</p>
                                                     <p className="text-[10px] text-gray-400 uppercase tracking-tighter">{cat.displayName || '-'}</p>
                                                 </div>
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                {cat.sortOrder != null ? (
+                                                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-black bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                                                        #{cat.sortOrder}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-xs text-gray-400">—</span>
+                                                )}
                                             </TableCell>
                                             <TableCell className="text-center">
                                                 <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-black bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
@@ -513,6 +527,22 @@ export default function CategoryTable() {
                                     className="h-12 bg-gray-50 dark:bg-white/5 border-gray-100 dark:border-white/10 rounded-xl focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                                     disabled={isSubmitting}
                                 />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] uppercase tracking-widest text-gray-400 font-black ml-1">Urutan / Prioritas (Optional)</label>
+                                <Input
+                                    type="number"
+                                    min={0}
+                                    value={sortOrder ?? ''}
+                                    onChange={e => {
+                                        const val = e.target.value;
+                                        setSortOrder(val === '' ? null : parseInt(val, 10));
+                                    }}
+                                    placeholder="e.g. 1 (semakin kecil semakin atas)"
+                                    className="h-12 bg-gray-50 dark:bg-white/5 border-gray-100 dark:border-white/10 rounded-xl focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                                    disabled={isSubmitting}
+                                />
+                                <p className="text-[10px] text-gray-400 ml-1">Angka kecil tampil lebih atas di Telegram Bot. Kosongkan jika tidak perlu prioritas.</p>
                             </div>
                             {formError && (
                                 <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold animate-shake">
