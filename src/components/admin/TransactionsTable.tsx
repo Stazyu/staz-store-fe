@@ -22,13 +22,24 @@ const statusMap: Record<string, { label: string; color: string }> = {
 export interface TransactionsTableProps {
   defaultType?: string;
   defaultCategory?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
-export default function TransactionsTable({ defaultType, defaultCategory }: TransactionsTableProps = {}) {
+export default function TransactionsTable({
+  defaultType,
+  defaultCategory,
+  startDate: propStartDate,
+  endDate: propEndDate,
+}: TransactionsTableProps = {}) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [localStartDate, setLocalStartDate] = useState("");
+  const [localEndDate, setLocalEndDate] = useState("");
+
+  const startDate = propStartDate !== undefined ? propStartDate : localStartDate;
+  const endDate = propEndDate !== undefined ? propEndDate : localEndDate;
+
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const queryClient = useQueryClient();
@@ -106,10 +117,19 @@ export default function TransactionsTable({ defaultType, defaultCategory }: Tran
             <option value="PENDING">Pending</option>
             <option value="FAILED">Gagal</option>
           </select>
-          <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-36" />
-          <span>-</span>
-          <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-36" />
-          <Button variant="outline" size="sm" className="gap-2" onClick={() => { setStartDate(""); setEndDate(""); setStatus(""); setSearch(""); }}><FiFilter />Reset</Button>
+          {!propStartDate && !propEndDate && (
+            <>
+              <Input type="date" value={localStartDate} onChange={e => setLocalStartDate(e.target.value)} className="w-36" />
+              <span>-</span>
+              <Input type="date" value={localEndDate} onChange={e => setLocalEndDate(e.target.value)} className="w-36" />
+            </>
+          )}
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => {
+            if (!propStartDate) setLocalStartDate("");
+            if (!propEndDate) setLocalEndDate("");
+            setStatus("");
+            setSearch("");
+          }}><FiFilter />Reset</Button>
           <Button
             variant="default"
             size="sm"

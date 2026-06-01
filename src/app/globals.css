@@ -152,3 +152,34 @@ body {
   }
   /* … */
 }
+
+/* Custom react-day-picker overrides */
+.rdp-root {
+  --rdp-accent-color: #3b82f6 !important;
+  --rdp-accent-background-color: rgba(59, 130, 246, 0.12) !important;
+  --rdp-range_start-date-background-color: #3b82f6 !important;
+  --rdp-range_end-date-background-color: #3b82f6 !important;
+  --rdp-range_start-color: #ffffff !important;
+  --rdp-range_end-color: #ffffff !important;
+  --rdp-range_middle-background-color: rgba(59, 130, 246, 0.12) !important;
+  --rdp-range_middle-color: #1e40af !important;
+  --rdp-selected-border: 2px solid #3b82f6 !important;
+}
+
+:root.dark .rdp-root {
+  --rdp-accent-color: #3b82f6 !important;
+  --rdp-accent-background-color: rgba(59, 130, 246, 0.2) !important;
+  --rdp-range_start-date-background-color: #3b82f6 !important;
+  --rdp-range_end-date-background-color: #3b82f6 !important;
+  --rdp-range_start-color: #ffffff !important;
+  --rdp-range_end-color: #ffffff !important;
+  --rdp-range_middle-background-color: rgba(59, 130, 246, 0.2) !important;
+  --rdp-range_middle-color: #60a5fa !important;
+  --rdp-selected-border: 2px solid #3b82f6 !important;
+}
+
+.rdp-day_button:hover:not(:disabled):not(.rdp-range_start .rdp-day_button):not(.rdp-range_end .rdp-day_button) {
+  background-color: var(--rdp-accent-background-color) !important;
+}
+
+

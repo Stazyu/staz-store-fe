@@ -50,74 +50,120 @@ export function DateRangePicker({ value, onChange }: Props) {
     onChange({ from, to });
     setMonth(computeLeftMonth(from, to));
   };
-
   // Theme-aware colors for dark mode DayPicker
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
+  const { theme, resolvedTheme } = useTheme();
+  const isDark = theme === 'dark' || resolvedTheme === 'dark';
+
   const dpModifiersStyles = React.useMemo<DPModifiersStyles>(() => {
-    if (!isDark) return {} as DPModifiersStyles;
-    const selectedBg = '#60a5fa'; // blue-400
-    const selectedText = '#0b1220'; // near-black for readability on blue
-    const rangeBg = '#1f4e5f'; // teal-ish bar for middle range
-    const rangeText = '#e5e7eb';
-    const outsideText = '#475569';
-    // const todayRing = '#94a3b8';
+    const outsideText = isDark ? '#475569' : '#94a3b8';
+    const todayText = '#3b82f6';
+    
     return {
-      selected: { backgroundColor: selectedBg, color: selectedText, borderRadius: '9999px' },
-      range_start: { backgroundColor: selectedBg, color: selectedText, borderRadius: '9999px' },
-      range_end: { backgroundColor: selectedBg, color: selectedText, borderRadius: '9999px' },
-      range_middle: { backgroundColor: rangeBg, color: rangeText, borderRadius: 0 },
-      outside: { color: outsideText },
-      today: { color: '#2d7dfc' },
+      outside: { 
+        color: outsideText 
+      },
+      today: { 
+        color: todayText, 
+        fontWeight: '700' 
+      },
     } as DPModifiersStyles;
   }, [isDark]);
 
   const dpStyles = React.useMemo(() => {
-    if (!isDark) return {};
     return {
-      caption_label: { color: '#e5e7eb', fontWeight: 700 },
-      head_cell: { color: '#9ca3af', fontWeight: 600 },
-      nav_button: { color: '#e5e7eb' },
-      day: { color: '#e5e7eb' },
+      caption_label: { 
+        color: isDark ? '#f3f4f6' : '#1f2937', 
+        fontWeight: 700,
+        fontSize: '15px'
+      },
+      head_cell: { 
+        color: isDark ? '#9ca3af' : '#4b5563', 
+        fontWeight: 600,
+        fontSize: '13px',
+        textTransform: 'uppercase',
+        letterSpacing: '0.05em',
+        paddingBottom: '8px'
+      },
+      nav_button: { 
+        color: isDark ? '#f3f4f6' : '#1f2937' 
+      },
+      day: { 
+        color: isDark ? '#e5e7eb' : '#374151',
+        transition: 'all 0.15s ease'
+      },
     } as const;
   }, [isDark]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="w-full sm:w-auto justify-start gap-2">
-          <FiCalendar className="h-4 w-4" />
+        <button
+          type="button"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 text-sm font-semibold hover:-translate-y-0.5 active:translate-y-0 shadow-sm transition-all duration-200 hover:bg-gray-50 dark:hover:bg-white/5 w-full sm:w-auto justify-center sm:justify-start"
+        >
+          <FiCalendar className="h-4 w-4 text-blue-500" />
           <span className="truncate">{label}</span>
-        </Button>
+        </button>
       </PopoverTrigger>
-      <PopoverContent className="p-3 w-auto" align="end">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="sm:border-r sm:pr-3">
-            <div className="flex gap-2 mb-2">
-              <Button size="sm" variant="secondary" onClick={() => setPreset(7)}>7 Hari</Button>
-              <Button size="sm" variant="secondary" onClick={() => setPreset(30)}>30 Hari</Button>
-              <Button size="sm" variant="secondary" onClick={() => setPreset(90)}>90 Hari</Button>
-            </div>
-            <DayPicker
-              mode="range"
-              selected={value as RDPDateRange}
-              onSelect={(range) => onChange({ from: range?.from, to: range?.to })}
-              numberOfMonths={2}
-              month={month}
-              onMonthChange={setMonth}
-              captionLayout="dropdown"
-              pagedNavigation
-              fixedWeeks
-              fromMonth={new Date(2023, 0, 1)}
-              toMonth={today}
-              disabled={{ after: today }}
-              locale={id}
-              weekStartsOn={1}
-              showOutsideDays
-              modifiersStyles={dpModifiersStyles}
-              styles={dpStyles as unknown as DPStyles}
-            />
+      <PopoverContent 
+        className="p-4 w-auto rounded-2xl border border-gray-200 dark:border-white/5 bg-white dark:bg-gray-950 shadow-2xl backdrop-blur-xl" 
+        align="end"
+        style={{
+          ['--rdp-day-height' as any]: '40px',
+          ['--rdp-day-width' as any]: '40px',
+          ['--rdp-day_button-height' as any]: '38px',
+          ['--rdp-day_button-width' as any]: '38px',
+        }}
+      >
+        <div className="flex flex-col gap-4">
+          {/* Preset Buttons */}
+          <div className="flex gap-2 border-b border-gray-100 dark:border-white/5 pb-3">
+            {[
+              { label: "7 Hari", days: 7 },
+              { label: "30 Hari", days: 30 },
+              { label: "90 Hari", days: 90 },
+            ].map((preset) => (
+              <button
+                key={preset.days}
+                onClick={() => setPreset(preset.days)}
+                type="button"
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-50 dark:bg-white/5 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 border border-gray-200/50 dark:border-white/5 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
+              >
+                {preset.label}
+              </button>
+            ))}
           </div>
+
+          <DayPicker
+            mode="range"
+            selected={value as RDPDateRange}
+            onSelect={(range) => onChange({ from: range?.from, to: range?.to })}
+            numberOfMonths={2}
+            month={month}
+            onMonthChange={setMonth}
+            captionLayout="dropdown"
+            pagedNavigation
+            fixedWeeks
+            fromMonth={new Date(2023, 0, 1)}
+            toMonth={today}
+            disabled={{ after: today }}
+            locale={id}
+            weekStartsOn={1}
+            showOutsideDays
+            modifiersStyles={dpModifiersStyles}
+            styles={dpStyles as unknown as DPStyles}
+            style={{
+              ['--rdp-accent-color' as any]: '#3b82f6',
+              ['--rdp-accent-background-color' as any]: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.12)',
+              ['--rdp-range_start-date-background-color' as any]: '#3b82f6',
+              ['--rdp-range_end-date-background-color' as any]: '#3b82f6',
+              ['--rdp-range_start-color' as any]: '#ffffff',
+              ['--rdp-range_end-color' as any]: '#ffffff',
+              ['--rdp-range_middle-background-color' as any]: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.12)',
+              ['--rdp-range_middle-color' as any]: isDark ? '#60a5fa' : '#1e40af',
+              ['--rdp-selected-border' as any]: '2px solid #3b82f6',
+            }}
+          />
         </div>
       </PopoverContent>
     </Popover>
