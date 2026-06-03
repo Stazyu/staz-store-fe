@@ -93,6 +93,11 @@ const CustomPieTooltip = ({ active, payload }: any) => {
           Revenue: <span className="font-bold text-white">{formatCurrency(data.revenue)}</span>
         </p>
       )}
+      {data.profit !== undefined && (
+        <p className="text-xs text-gray-300 mt-1">
+          Profit: <span className="font-bold text-white">{formatCurrency(data.profit)}</span>
+        </p>
+      )}
       <p className="text-xs text-gray-300 mt-1">
         Porsi: <span className="font-bold text-white">{data.value}%</span>
       </p>
@@ -113,8 +118,8 @@ function ReportsSkeleton() {
       {/* Skeleton picker */}
       <div className="h-20 bg-gray-200 dark:bg-gray-800 rounded-2xl" />
       {/* Skeleton grid cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[1, 2, 3, 4].map(i => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {[1, 2, 3, 4, 5].map(i => (
           <div key={i} className="h-32 bg-gray-200 dark:bg-gray-800 rounded-2xl" />
         ))}
       </div>
@@ -312,7 +317,7 @@ export default function ReportsPageContent() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Card 1: Total Pendapatan */}
         <div className="relative group overflow-hidden rounded-2xl border border-blue-500/20 bg-linear-to-br from-blue-500/10 to-cyan-500/5 backdrop-blur-sm p-6 transition-all duration-500 hover:shadow-xl hover:shadow-blue-500/25 hover:-translate-y-1 cursor-default">
           <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-linear-to-br from-blue-500 to-cyan-400 opacity-10 blur-2xl group-hover:opacity-20 transition-opacity duration-500" />
@@ -331,6 +336,29 @@ export default function ReportsPageContent() {
             <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${summary.revenueGrowth >= 0 ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" : "bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/20"}`}>
               {summary.revenueGrowth >= 0 ? <FiArrowUp className="w-3 h-3" /> : <FiArrowDown className="w-3 h-3" />}
               {Math.abs(summary.revenueGrowth)}%
+            </div>
+            <span className="text-xs text-gray-500 dark:text-gray-600">vs periode sebelumnya</span>
+          </div>
+        </div>
+
+        {/* Card 2: Total Profit */}
+        <div className="relative group overflow-hidden rounded-2xl border border-rose-500/20 bg-linear-to-br from-rose-500/10 to-pink-500/5 backdrop-blur-sm p-6 transition-all duration-500 hover:shadow-xl hover:shadow-rose-500/25 hover:-translate-y-1 cursor-default">
+          <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-linear-to-br from-rose-500 to-pink-400 opacity-10 blur-2xl group-hover:opacity-20 transition-opacity duration-500" />
+          <div className="absolute top-0 left-0 right-0 h-0.5 bg-linear-to-r from-rose-500 to-pink-400 opacity-60" />
+          <div className="relative flex items-start justify-between">
+            <div className="flex-1">
+              <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">Total Profit</p>
+              <div className="text-2xl font-black text-gray-900 dark:text-white leading-none mb-1">{formatCurrency(summary.totalProfit)}</div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Estimasi keuntungan bersih</p>
+            </div>
+            <div className="shrink-0 p-3 rounded-xl bg-rose-500/20 text-rose-400 ml-4">
+              <FiTrendingUp className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="relative mt-4 flex items-center gap-2">
+            <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${summary.profitGrowth >= 0 ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" : "bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/20"}`}>
+              {summary.profitGrowth >= 0 ? <FiArrowUp className="w-3 h-3" /> : <FiArrowDown className="w-3 h-3" />}
+              {Math.abs(summary.profitGrowth)}%
             </div>
             <span className="text-xs text-gray-500 dark:text-gray-600">vs periode sebelumnya</span>
           </div>
@@ -401,7 +429,7 @@ export default function ReportsPageContent() {
               {summary.customerGrowth >= 0 ? <FiArrowUp className="w-3 h-3" /> : <FiArrowDown className="w-3 h-3" />}
               {Math.abs(summary.customerGrowth)}%
             </div>
-            <span className="text-xs text-gray-500 dark:text-gray-650">vs periode sebelumnya</span>
+            <span className="text-xs text-gray-500 dark:text-gray-600">vs periode sebelumnya</span>
           </div>
         </div>
       </div>
