@@ -276,7 +276,7 @@ export default function CategoryTable() {
                         </div>
                     </div>
                     <div className="p-6 flex-1" style={{ minHeight: 300 }}>
-                        <ResponsiveContainer width="100%" height={300} minWidth={0}>
+                        <ResponsiveContainer width="100%" height={300} minWidth={0} initialDimension={{ width: 100, height: 100 }}>
                             <BarChart data={chartData} layout="vertical" margin={{ left: -20, right: 20 }}>
                                 <defs>
                                     <linearGradient id="barGrad" x1="0" y1="0" x2="1" y2="0">

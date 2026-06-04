@@ -473,7 +473,7 @@ export default function ReportsPageContent() {
               <div className="p-6">
                 <div className="h-80">
                   {mounted && dailySales.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 100, height: 100 }}>
                       <AreaChart data={dailySales} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
                         <defs>
                           <linearGradient id="fillSuccess" x1="0" y1="0" x2="0" y2="1">
@@ -557,7 +557,7 @@ export default function ReportsPageContent() {
               <div className="p-6">
                 <div className="h-80">
                   {mounted && categoryDistribution.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 100, height: 100 }}>
                       <PieChart>
                         <Pie
                           data={categoryDistribution}
@@ -707,7 +707,7 @@ export default function ReportsPageContent() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
                 <div className="lg:col-span-2 h-96">
                   {mounted && paymentMethods.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 100, height: 100 }}>
                       <PieChart>
                         <Pie
                           data={paymentMethods}

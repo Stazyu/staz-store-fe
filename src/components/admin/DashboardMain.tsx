@@ -295,7 +295,7 @@ export default function DashboardMain() {
           </div>
           <div className="p-6">
             {revenueTrend.length > 0 ? (
-              <ResponsiveContainer width="100%" height={320} minWidth={0}>
+              <ResponsiveContainer width="100%" height={320} minWidth={0} initialDimension={{ width: 100, height: 100 }}>
                 <AreaChart data={revenueTrend} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                   <defs>
                     <linearGradient id="fillRevenue" x1="0" y1="0" x2="0" y2="1">
@@ -475,7 +475,7 @@ export default function DashboardMain() {
           <div className="p-6">
             {hasStatusData ? (
               <>
-                <ResponsiveContainer width="100%" height={240} minWidth={0}>
+                <ResponsiveContainer width="100%" height={240} minWidth={0} initialDimension={{ width: 100, height: 100 }}>
                   <BarChart data={transactionStatus} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
                     <defs>
                       {transactionStatus.map((s, idx) => (
