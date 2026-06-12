@@ -1,88 +1,83 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { FiHome, FiBarChart2, FiUsers, FiBox, FiFileText, FiSettings, FiLayers, FiTag, FiDollarSign } from "react-icons/fi";
+import { Box } from "lucide-react";
+import { adminSidebarGroups } from "@/config/admin-sidebar";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import SidebarItem from "./SidebarItem";
 
-const navItems = [
-  { name: "Dashboard", href: "/admin/dashboard", icon: FiHome },
-  { name: "Kategori", href: "/admin/category", icon: FiLayers },
-  { name: "Brand", href: "/admin/brands", icon: FiTag },
-  { name: "Tipe", href: "/admin/types", icon: FiLayers },
-  { name: "Pengguna", href: "/admin/customers", icon: FiUsers },
-  { name: "Produk", href: "/admin/products", icon: FiBox },
-  { name: "Top Up", href: "/admin/topups", icon: FiDollarSign },
-  {
-    name: "Transaksi",
-    href: "/admin/transactions",
-    icon: FiBarChart2,
-  },
-  { name: "Laporan", href: "/admin/reports", icon: FiFileText },
-  { name: "Pengaturan", href: "/admin/settings", icon: FiSettings },
-];
+// ─── Badge data type ──────────────────────────────────────────────────────────
+// Injected via props or fetched from an API / context.
+// Keys match BADGE_KEYS from the config.
+export type BadgeCounts = Record<string, number>;
 
-function NavItem({ item, pathname }: { item: typeof navItems[0], pathname: string | null }) {
-  const isActive = pathname?.startsWith(item.href);
-
-  return (
-    <Link
-      href={item.href}
-      className={cn(
-        "flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-linear-to-r hover:from-blue-50 hover:to-sky-50 hover:text-blue-700 dark:hover:from-blue-900/20 dark:hover:to-sky-900/20 dark:hover:text-blue-300 transition-all duration-200 font-medium group",
-        isActive && "bg-linear-to-r from-blue-100 to-sky-100 text-blue-700 dark:from-blue-900/30 dark:to-sky-900/30 dark:text-blue-300 shadow-sm"
-      )}
-    >
-      <div className={cn(
-        "p-1.5 rounded-lg transition-all duration-200",
-        isActive
-          ? "bg-linear-to-br from-blue-500 to-sky-500 text-white shadow-lg shadow-blue-500/25"
-          : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 group-hover:text-blue-600 dark:group-hover:text-blue-400"
-      )}>
-        <item.icon className="w-4 h-4" />
-      </div>
-      <span>{item.name}</span>
-    </Link>
-  );
+interface AdminSidebarProps {
+  /** Optional badge counts to display on menu items */
+  badges?: BadgeCounts;
 }
 
-export default function AdminSidebar() {
+/**
+ * Determine whether a sidebar item should be marked active.
+ * Matches exact path or any sub-path (e.g. /admin/orders/INV-001).
+ */
+function isItemActive(pathname: string | null, href: string): boolean {
+  if (!pathname) return false;
+  return pathname === href || pathname.startsWith(href + "/");
+}
+
+export default function AdminSidebar({ badges = {} }: AdminSidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden md:flex flex-col w-72 h-screen sticky top-0 bg-white/40 dark:bg-gray-900/60 backdrop-blur-xl border-r border-gray-200/50 dark:border-gray-800/50 shadow-xl shadow-gray-200/20 dark:shadow-gray-900/10">
-      {/* Logo Section with Blue Gradient */}
-      <div className="relative flex items-center h-20 px-6 border-b border-gray-100 dark:border-gray-800/50 overflow-hidden">
-        <div className="relative flex items-center gap-3">
-          <div className="p-2.5 bg-linear-to-br from-blue-600 to-sky-500 rounded-xl shadow-lg shadow-blue-500/30">
-            <FiBox className="h-6 w-6 text-white" />
+    <aside className="hidden md:flex flex-col w-[280px] h-screen sticky top-0 bg-[#090e1a] border-r border-slate-800/60 text-slate-300">
+      {/* ─── Logo ────────────────────────────────────────────────────── */}
+      <div className="flex items-center h-20 shrink-0 px-6 border-b border-slate-800/60">
+        <div className="flex items-center gap-3">
+          <div className="flex size-10 items-center justify-center rounded-xl bg-linear-to-br from-blue-600 to-sky-500 shadow-lg shadow-blue-500/30">
+            <Box className="size-5 text-white" strokeWidth={2.5} />
           </div>
           <div>
-            <h1 className="text-lg font-bold bg-linear-to-r from-blue-600 to-sky-500 bg-clip-text text-transparent">
+            <h1 className="text-lg font-bold bg-linear-to-r from-blue-400 to-sky-400 bg-clip-text text-transparent">
               Staz Store
             </h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Panel Admin</p>
+            <p className="text-xs text-slate-500">Panel Admin</p>
           </div>
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 py-6 px-3 space-y-1.5 overflow-y-auto">
-        <div className="px-3 mb-4">
-          <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Menu Utama</p>
-        </div>
-        {navItems.map((item) => (
-          <NavItem key={item.href} item={item} pathname={pathname} />
-        ))}
-      </nav>
+      {/* ─── Navigation (scrollable) ─────────────────────────────────── */}
+      <ScrollArea className="flex-1">
+        <nav className="px-3 py-4 space-y-1">
+          {adminSidebarGroups.map((group) => (
+            <div key={group.label}>
+              {/* Group label */}
+              <p className="px-4 mt-5 mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500 first:mt-2">
+                {group.label}
+              </p>
 
-      {/* Footer */}
-      <div className="p-4 border-t border-gray-100 dark:border-gray-800/50">
-        <div className="p-3 bg-linear-to-r from-blue-50 to-sky-50 dark:from-blue-900/20 dark:to-sky-900/20 rounded-xl border border-blue-100 dark:border-blue-800/30">
-          <p className="text-xs text-blue-700 dark:text-blue-300 font-medium">Staz Store Admin</p>
-          <p className="text-xs text-blue-600/70 dark:text-blue-400/70">v1.0.0</p>
+              {/* Group items */}
+              <div className="space-y-1">
+                {group.items.map((item) => (
+                  <SidebarItem
+                    key={item.href}
+                    item={item}
+                    isActive={isItemActive(pathname, item.href)}
+                    badge={item.badgeKey ? badges[item.badgeKey] : undefined}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </nav>
+      </ScrollArea>
+
+      {/* ─── User Card / Footer ──────────────────────────────────────── */}
+      {/* <div className="shrink-0 p-4 border-t border-slate-800">
+        <div className="rounded-xl border border-blue-800/30 bg-linear-to-r from-blue-900/20 to-sky-900/20 p-3">
+          <p className="text-xs font-medium text-blue-300">Staz Store Admin</p>
+          <p className="text-xs text-blue-400/70">v1.0.0</p>
         </div>
-      </div>
+      </div> */}
     </aside>
   );
 }

@@ -2,8 +2,8 @@ import { fetchWithJwt } from "@/lib/api-client";
 import { TypeItem, TypeApiResponse, TypeParams } from "@/types/type.types";
 
 const API_BASE_URL = process.env.NODE_ENV === 'production'
-    ? '/api/v1/types'
-    : `${process.env.NEXT_PUBLIC_API_URL}/api/v1/types`;
+    ? '/api/v1/product-types'
+    : `${process.env.NEXT_PUBLIC_API_URL}/api/v1/product-types`;
 
 export const fetchTypes = async (params?: TypeParams): Promise<TypeItem[]> => {
     try {

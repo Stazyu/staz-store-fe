@@ -181,5 +181,3 @@ body {
 .rdp-day_button:hover:not(:disabled):not(.rdp-range_start .rdp-day_button):not(.rdp-range_end .rdp-day_button) {
   background-color: var(--rdp-accent-background-color) !important;
 }
-
-

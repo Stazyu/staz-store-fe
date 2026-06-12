@@ -1,5 +1,3 @@
-"use client";
-
 import SettingsPageContent from "@/components/admin/SettingsPageContent";
 
 export default function SettingsPage() {
