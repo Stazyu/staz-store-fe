@@ -1,10 +1,14 @@
-import SettingsPageContent from "@/components/admin/SettingsPageContent";
+import type { Metadata } from "next";
+import SettingsContent from "@/features/admin/settings/components/settings-content";
+
+export const metadata: Metadata = {
+  title: "Pengaturan | Admin",
+};
 
 export default function SettingsPage() {
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold mb-4">Pengaturan Admin & Toko</h1>
-      <SettingsPageContent />
+      <SettingsContent />
     </div>
   );
 }

@@ -5,6 +5,7 @@ export interface TopupInvoice {
     amount: number;
     status: 'PENDING' | 'PAID' | 'CANCELLED' | 'REJECTED';
     paymentMethod?: string;
+    topUpChannel?: 'WEB' | 'TELEGRAM';
     notes?: string;
     createdAt: string;
     updatedAt: string;
@@ -18,6 +19,7 @@ export interface AdminTopupInvoice {
     paymentMethod: string;
     paymentRef: string | null;
     status: 'PENDING' | 'PAID' | 'EXPIRED' | 'CANCELLED';
+    topUpChannel?: 'WEB' | 'TELEGRAM';
     expiredAt: string;
     createdAt: string;
     updatedAt: string;

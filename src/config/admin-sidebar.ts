@@ -70,7 +70,7 @@ export const adminSidebarGroups: SidebarGroup[] = [
         permission: "category.read",
       },
       {
-        title: "Brand / Game",
+        title: "Brand",
         href: "/admin/brands",
         icon: Tags,
         permission: "brand.read",

@@ -29,18 +29,18 @@ export default function AdminSidebar({ badges = {} }: AdminSidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden md:flex flex-col w-[280px] h-screen sticky top-0 bg-[#090e1a] border-r border-slate-800/60 text-slate-300">
+    <aside className="hidden md:flex flex-col w-70 h-screen sticky top-0 bg-white dark:bg-[#090e1a] border-r border-slate-200 dark:border-slate-800/60 text-slate-700 dark:text-slate-300">
       {/* ─── Logo ────────────────────────────────────────────────────── */}
-      <div className="flex items-center h-20 shrink-0 px-6 border-b border-slate-800/60">
+      <div className="flex items-center h-20 shrink-0 px-6 border-b border-slate-200 dark:border-slate-800/60">
         <div className="flex items-center gap-3">
           <div className="flex size-10 items-center justify-center rounded-xl bg-linear-to-br from-blue-600 to-sky-500 shadow-lg shadow-blue-500/30">
             <Box className="size-5 text-white" strokeWidth={2.5} />
           </div>
           <div>
-            <h1 className="text-lg font-bold bg-linear-to-r from-blue-400 to-sky-400 bg-clip-text text-transparent">
+            <h1 className="text-lg font-bold bg-linear-to-r from-blue-600 to-sky-600 dark:from-blue-400 dark:to-sky-400 bg-clip-text text-transparent">
               Staz Store
             </h1>
-            <p className="text-xs text-slate-500">Panel Admin</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500">Panel Admin</p>
           </div>
         </div>
       </div>
@@ -51,7 +51,7 @@ export default function AdminSidebar({ badges = {} }: AdminSidebarProps) {
           {adminSidebarGroups.map((group) => (
             <div key={group.label}>
               {/* Group label */}
-              <p className="px-4 mt-5 mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500 first:mt-2">
+              <p className="px-4 mt-5 mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 first:mt-2">
                 {group.label}
               </p>
 

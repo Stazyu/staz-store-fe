@@ -14,6 +14,7 @@ export interface Deposit {
     paymentMethod: string;
     paymentRef: string | null;
     status: 'PENDING' | 'PAID' | 'EXPIRED' | 'CANCELLED';
+    topUpChannel?: 'WEB' | 'TELEGRAM';
     expiredAt: string;
     createdAt: string;
     updatedAt: string;

@@ -1,11 +1,14 @@
-"use client";
+import type { Metadata } from "next";
+import ReportsContent from "@/features/admin/reports/components/reports-content";
 
-import ReportsPageContent from "@/components/admin/ReportsPageContent";
+export const metadata: Metadata = {
+  title: "Laporan | Admin",
+};
 
 export default function ReportsPage() {
   return (
     <div className="space-y-6">
-      <ReportsPageContent />
+      <ReportsContent />
     </div>
   );
 }

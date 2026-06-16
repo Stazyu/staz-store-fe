@@ -1,4 +1,9 @@
-import CategoryTable from "@/components/admin/CategoryTable";
+import type { Metadata } from "next";
+import CategoryTable from "@/features/admin/categories/components/category-table";
+
+export const metadata: Metadata = {
+  title: "Manajemen Kategori | Admin",
+};
 
 export default function CategoryPage() {
   return (

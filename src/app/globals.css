@@ -1,6 +1,7 @@
 /* src/app/globals.css */
 
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 /* Optional: jika masih ingin menggunakan tailwind.config.js sebagai fallback */
 @config "../../tailwind.config.ts";
 

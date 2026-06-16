@@ -1,4 +1,9 @@
-import ProductTable from "@/components/admin/ProductTable";
+import type { Metadata } from "next";
+import ProductTable from "@/features/admin/products/components/product-table";
+
+export const metadata: Metadata = {
+  title: "Manajemen Produk | Admin",
+};
 
 export default function ProductsPage() {
   return (

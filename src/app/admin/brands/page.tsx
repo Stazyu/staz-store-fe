@@ -1,4 +1,9 @@
-import BrandTable from "@/components/admin/BrandTable";
+import type { Metadata } from "next";
+import BrandTable from "@/features/admin/brands/components/brand-table";
+
+export const metadata: Metadata = {
+  title: "Manajemen Brand | Admin",
+};
 
 export default function BrandsPage() {
   return (
