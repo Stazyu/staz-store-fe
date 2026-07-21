@@ -201,7 +201,7 @@ export default function DashboardMain() {
 
       {/* ── Hero Header ── */}
       <div className="relative overflow-hidden rounded-3xl p-8">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-violet-50 dark:from-blue-950 dark:via-indigo-950 dark:to-violet-950" />
+        <div className="absolute inset-0 bg-linear-to-br from-blue-50 via-indigo-50 to-violet-50 dark:from-blue-950 dark:via-indigo-950 dark:to-violet-950" />
         <div
           className="absolute inset-0 opacity-10"
           style={{

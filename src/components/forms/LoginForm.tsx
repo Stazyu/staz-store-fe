@@ -14,7 +14,8 @@ export default function LoginForm() {
     const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
         email: '',
-        password: ''
+        password: '',
+        rememberMe: false
     });
     const [errors, setErrors] = useState<Record<string, string | undefined>>({});
     const [isLoading, setIsLoading] = useState(false);
@@ -29,10 +30,10 @@ export default function LoginForm() {
     }, [session, router]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
+        const { name, value, type, checked } = e.target;
         setFormData(prev => ({
             ...prev,
-            [name]: value
+            [name]: type === 'checkbox' ? checked : value
         }));
         // Clear error when user types
         if (errors[name]) {
@@ -68,6 +69,7 @@ export default function LoginForm() {
             const res = await authClient.signIn.email({
                 email: formData.email,
                 password: formData.password,
+                rememberMe: formData.rememberMe,
             }, { credentials: 'include' })
 
             if (res?.error) {
@@ -130,7 +132,7 @@ export default function LoginForm() {
 
                         {registered && (
                             <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-300 text-sm flex items-start backdrop-blur-sm">
-                                <svg className="flex-shrink-0 mt-0.5 mr-2 w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <svg className="shrink-0 mt-0.5 mr-2 w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                 </svg>
                                 <span>Pendaftaran berhasil! Silakan masuk dengan akun Anda.</span>
@@ -139,7 +141,7 @@ export default function LoginForm() {
 
                         {errors.submit && (
                             <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900 rounded-lg text-red-600 dark:text-red-400 text-sm flex items-start">
-                                <FiAlertCircle className="flex-shrink-0 mt-0.5 mr-2" />
+                                <FiAlertCircle className="shrink-0 mt-0.5 mr-2" />
                                 <span>{errors.submit}</span>
                             </div>
                         )}
@@ -205,8 +207,10 @@ export default function LoginForm() {
                                 <div className="flex items-center">
                                     <input
                                         id="remember-me"
-                                        name="remember-me"
+                                        name="rememberMe"
                                         type="checkbox"
+                                        checked={formData.rememberMe}
+                                        onChange={handleChange}
                                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded bg-white/50 dark:bg-gray-700/50"
                                     />
                                     <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
@@ -224,7 +228,7 @@ export default function LoginForm() {
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full mt-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-medium py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
+                                className="w-full mt-6 bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-medium py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
                             >
                                 {isLoading ? (
                                     <span className="flex items-center justify-center">

@@ -5,6 +5,8 @@ import { FaUser, FaServer, FaInfoCircle, FaCheck, FaSpinner } from 'react-icons/
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { PAYMENT_METHOD_CATEGORIES, PAYMENT_METHODS } from '@/constants/paymentMethods';
+import authClient from '@/lib/auth-client';
+import { validatePromoCode } from '@/services/promo.client';
 
 // Components
 import PurchaseFooter from '@/components/purchase/PurchaseFooter';
@@ -36,6 +38,7 @@ interface PurchaseFormProps {
 }
 
 export default function PurchaseForm({ selectedOption, currency, gameTitle, isAuthenticated, onClose, onSubmit }: PurchaseFormProps) {
+  const { data: session } = authClient.useSession();
   const isMobileLegends = gameTitle.toLowerCase().includes('mobile legends');
   const showServerField = ['genshin', 'wuthering waves', 'honkai star rail', 'zenless zone zero'].some(
     game => gameTitle.toLowerCase().includes(game)
@@ -62,8 +65,15 @@ export default function PurchaseForm({ selectedOption, currency, gameTitle, isAu
   const [voucher, setVoucher] = useState<{
     code: string;
     discount: number;
+    cashback: number;
+    feeWaiver: number;
     isValid: boolean;
   } | null>(null);
+
+  // Reset voucher if option or payment method changes
+  useEffect(() => {
+    setVoucher(null);
+  }, [selectedOption, formData.paymentMethod]);
 
   console.log('PurchaseForm selectedOption', selectedOption);
 
@@ -107,10 +117,26 @@ export default function PurchaseForm({ selectedOption, currency, gameTitle, isAu
     }
   }, [isAuthenticated, formData.paymentMethod]);
 
-  // Calculate final price based on selected payment method
+  // Calculate final price based on selected payment method and voucher
   const calculateFinalPrice = (methodId: string): number => {
     const method = PAYMENT_METHODS.find((m: PaymentMethod) => m.id === methodId);
-    return method && method.feeType === 'percentage' ? selectedOption.price * method.fee + selectedOption.price : method && method.feeType === 'fixed' ? selectedOption.price + method.fee : selectedOption.price;
+    let price = selectedOption.price;
+    let fee = 0;
+    if (method) {
+      fee = method.feeType === 'percentage' ? price * method.fee : method.fee;
+    }
+
+    if (voucher && voucher.feeWaiver > 0) {
+      fee = Math.max(0, fee - voucher.feeWaiver);
+    }
+
+    price += fee;
+
+    if (voucher && voucher.discount > 0) {
+      price -= voucher.discount;
+    }
+
+    return Math.max(0, price);
   };
 
   const finalPrice = calculateFinalPrice(formData.paymentMethod);
@@ -360,26 +386,42 @@ export default function PurchaseForm({ selectedOption, currency, gameTitle, isAu
                   />
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={async () => {
                       if (voucher) {
-                        // Cancel voucher
                         setVoucher(null);
                         setFormData(prev => ({ ...prev, voucherCode: '' }));
                         toast.success('Voucher dibatalkan');
                       } else {
-                        // Apply voucher
-                        // In a real app, you would validate the voucher with an API call
-                        const isValidVoucher = formData.voucherCode.length > 0; // Simple validation
-                        if (isValidVoucher) {
-                          setVoucher({
+                        if (!selectedOption) {
+                          toast.error('Pilih item terlebih dahulu');
+                          return;
+                        }
+                        if (!session?.user?.id) {
+                          toast.error('Silakan login terlebih dahulu');
+                          return;
+                        }
+                        if (!formData.paymentMethod) {
+                          toast.error('Pilih metode pembayaran terlebih dahulu');
+                          return;
+                        }
+                        try {
+                          const result = await validatePromoCode({
                             code: formData.voucherCode,
-                            discount: 10000, // Example discount amount
+                            userId: session.user.id,
+                            productId: String(selectedOption.id),
+                            paymentMethodCode: formData.paymentMethod.toUpperCase(),
+                            targetId: formData.playerId || undefined,
+                          });
+                          setVoucher({
+                            code: result.code,
+                            discount: result.discountAmount,
+                            cashback: result.cashbackAmount,
+                            feeWaiver: result.feeWaiverAmount,
                             isValid: true
                           });
                           toast.success('Voucher berhasil digunakan!');
-                        } else {
-                          setVoucher(null);
-                          toast.error('Kode voucher tidak valid');
+                        } catch (error: any) {
+                          toast.error(error.message || 'Kode voucher tidak valid');
                         }
                       }
                     }}
@@ -393,9 +435,12 @@ export default function PurchaseForm({ selectedOption, currency, gameTitle, isAu
                   </button>
                 </div>
                 {voucher && (
-                  <p className="text-xs text-green-600 dark:text-green-400">
-                    Voucher {voucher.code} berhasil digunakan! Diskon Rp {voucher.discount.toLocaleString('id-ID')}
-                  </p>
+                  <div className="text-xs text-green-600 dark:text-green-400 space-y-0.5 mt-1 font-medium">
+                    <p>Voucher {voucher.code} berhasil digunakan!</p>
+                    {voucher.discount > 0 && <p>• Diskon: Rp {voucher.discount.toLocaleString('id-ID')}</p>}
+                    {voucher.cashback > 0 && <p>• Cashback Saldo: Rp {voucher.cashback.toLocaleString('id-ID')}</p>}
+                    {voucher.feeWaiver > 0 && <p>• Bebas Biaya Admin: Rp {voucher.feeWaiver.toLocaleString('id-ID')}</p>}
+                  </div>
                 )}
               </div>
 

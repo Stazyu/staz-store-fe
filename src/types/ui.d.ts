@@ -12,6 +12,8 @@ declare module '@/components/ui/switch' {
         checked?: boolean;
         onCheckedChange?: (checked: boolean) => void;
         className?: string;
+        disabled?: boolean;
+        id?: string;
     }>;
 }
 

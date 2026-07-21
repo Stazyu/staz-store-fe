@@ -171,6 +171,12 @@ export const adminSidebarGroups: SidebarGroup[] = [
     label: "SISTEM",
     items: [
       {
+        title: "Metode Pembayaran",
+        href: "/admin/payment-methods",
+        icon: CreditCard,
+        permission: "paymentMethod.read",
+      },
+      {
         title: "Provider",
         href: "/admin/providers",
         icon: Server,

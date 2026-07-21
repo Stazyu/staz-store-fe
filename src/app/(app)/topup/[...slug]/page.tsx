@@ -15,6 +15,7 @@ import { TopUpCardProps } from '@/types/topUpCard.types';
 import { PAYMENT_METHOD_CATEGORIES, PAYMENT_METHODS } from '@/constants/paymentMethods';
 import { DUMMY_PROMO_CODES } from '@/data/promoCodes';
 import toast from 'react-hot-toast';
+import { validatePromoCode } from '@/services/promo.client';
 
 // New Components
 import UserIdInput from '@/components/topup/UserIdInput';
@@ -72,10 +73,18 @@ export default function TopUpPage() {
     const [promo, setPromo] = useState<{
         code: string;
         discount: number;
+        cashback: number;
+        feeWaiver: number;
         isValid: boolean;
         description?: string;
     } | null>(null);
     const [promoError, setPromoError] = useState<string>('');
+
+    // Reset promo when selected option or payment method changes to prevent invalid promo states
+    useEffect(() => {
+        setPromo(null);
+        setPromoError('');
+    }, [selectedOption, formData.paymentMethod]);
 
     const [showOrderModal, setShowOrderModal] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
@@ -153,33 +162,42 @@ export default function TopUpPage() {
 
     const handleApplyPromo = async (code: string) => {
         if (!selectedOption) {
-            toast.error('Pilih item terlebih dahulu sebelum menggunakan kode promo');
+            toast.error('Pilih nominal terlebih dahulu sebelum menggunakan promo');
             return false;
         }
 
-        await new Promise(resolve => setTimeout(resolve, 500));
+        if (!session?.user?.id) {
+            toast.error('Silakan login terlebih dahulu untuk menggunakan promo');
+            return false;
+        }
 
-        const validPromo = DUMMY_PROMO_CODES.find(p => p.code === code.toUpperCase());
+        if (!formData.paymentMethod) {
+            toast.error('Pilih metode pembayaran terlebih dahulu');
+            return false;
+        }
 
-        if (validPromo) {
-            if (selectedOption.price < validPromo.minSpend) {
-                setPromoError(`Minimal pembelian Rp ${validPromo.minSpend.toLocaleString('id-ID')} untuk menggunakan kode ini`);
-                return false;
-            }
+        try {
+            const result = await validatePromoCode({
+                code,
+                userId: session.user.id,
+                productId: selectedOption.id || product?.id || "",
+                paymentMethodCode: formData.paymentMethod.toUpperCase(),
+                targetId: formData.playerId || undefined,
+            });
 
-            let discount = 0;
-            if (validPromo.type === 'fixed') {
-                discount = validPromo.discountAmount;
-            } else if (validPromo.type === 'percentage') {
-                discount = selectedOption.price * validPromo.discountAmount;
-                if (validPromo.code === 'SULTAN' && discount > 50000) discount = 50000;
-            }
+            setPromo({
+                code: result.code,
+                discount: result.discountAmount,
+                cashback: result.cashbackAmount,
+                feeWaiver: result.feeWaiverAmount,
+                isValid: true,
+                description: result.name,
+            });
 
-            setPromo({ code: validPromo.code, discount, isValid: true, description: validPromo.description });
-            toast.success(`Kode promo "${validPromo.code}" berhasil digunakan!`);
+            toast.success(`Promo "${result.code}" berhasil digunakan!`);
             return true;
-        } else {
-            setPromoError('Kode promo tidak ditemukan');
+        } catch (error: any) {
+            setPromoError(error.message || 'Kode promo tidak valid');
             return false;
         }
     };
@@ -190,15 +208,22 @@ export default function TopUpPage() {
         let price = selectedOption.price;
         const method = PAYMENT_METHODS.find(m => m.id === formData.paymentMethod);
 
+        let fee = 0;
         if (method) {
             if (method.feeType === 'percentage') {
-                price += price * method.fee;
+                fee = price * method.fee;
             } else {
-                price += method.fee;
+                fee = method.fee;
             }
         }
 
-        if (promo) {
+        if (promo && promo.feeWaiver > 0) {
+            fee = Math.max(0, fee - promo.feeWaiver);
+        }
+
+        price += fee;
+
+        if (promo && promo.discount > 0) {
             price -= promo.discount;
         }
 
@@ -520,9 +545,19 @@ export default function TopUpPage() {
                                 </span>
                             )}
                         </div>
-                        {promo && (
+                        {promo && promo.discount > 0 && (
                             <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">
                                 Hemat: {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(promo.discount)}
+                            </p>
+                        )}
+                        {promo && promo.cashback > 0 && (
+                            <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">
+                                Cashback Saldo: {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(promo.cashback)}
+                            </p>
+                        )}
+                        {promo && promo.feeWaiver > 0 && (
+                            <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">
+                                Potongan Biaya Admin: {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(promo.feeWaiver)}
                             </p>
                         )}
                     </div>

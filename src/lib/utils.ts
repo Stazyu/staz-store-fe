@@ -37,3 +37,25 @@ export function getTierPrice(
   const tier = pricing.find((t) => t.tierCode === tierCode);
   return tier ? safePrice(tier.price) : 0;
 };
+
+export function formatPromoValue(type: string, value: number, maxDiscount?: number | null): string {
+  if (type === "DISCOUNT_FIXED") {
+    return `Potongan Rp ${value.toLocaleString("id-ID")}`;
+  } else if (type === "DISCOUNT_PERCENT") {
+    return `Diskon ${value}%${maxDiscount ? ` (Maks Rp ${maxDiscount.toLocaleString("id-ID")})` : ""}`;
+  } else if (type === "CASHBACK_FIXED") {
+    return `Cashback Rp ${value.toLocaleString("id-ID")}`;
+  } else if (type === "CASHBACK_PERCENT") {
+    return `Cashback ${value}%${maxDiscount ? ` (Maks Rp ${maxDiscount.toLocaleString("id-ID")})` : ""}`;
+  } else if (type === "FEE_WAIVER") {
+    return "Gratis Biaya Admin";
+  }
+  return `${value}`;
+}
+
+export function formatDateRange(start: string | Date, end: string | Date): string {
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  const opt: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric" };
+  return `${startDate.toLocaleDateString("id-ID", opt)} - ${endDate.toLocaleDateString("id-ID", opt)}`;
+}
